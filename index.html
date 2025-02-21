@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Chatbot | JVCodes</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&family=Material+Symbols+Rounded" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <style>
+    .quick-replies {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+     
+    }
+    .quick-reply {
+      border:1px solid #039297;
+      
+      color: #039297;
+      
+      padding: 10px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background-color 0.3s;
+    }
+    .quick-reply:hover {
+      background-color: #0056b3;
+    }
+    .message-time {
+      font-size: 12px;
+      color: gray;
+      margin-top: 5px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <button id="chatbot-toggler">
+    <span class="material-symbols-rounded">mode_comment</span>
+    <span class="material-symbols-rounded">close</span>
+  </button>
+
+  <div class="chatbot-popup">
+    <div class="chat-header">
+      <div class="header-info">
+        <img class="chatbot-logo" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+        <h2 class="logo-text">Chatbot</h2>
+      </div>
+      <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
+    </div>
+
+    <div class="chat-body">
+      <div class="message bot-message">
+        <div class="bot-avatar-wrapper">
+          <img class="bot-avatar" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+          <span class="online-indicator"></span>
+        </div>
+        
+        <div class="message-text">Hey there <br /> How can I help you today?</div>
+        <div class="message-time" id="bot-message-time"></div>
+      </div>
+      
+      <!-- Quick Reply Buttons -->
+      <div class="quick-replies">
+        <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
+        <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
+        <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
+      </div>
+    </div>
+
+    <div class="chat-footer">
+      <form action="#" class="chat-form">
+        <textarea placeholder="Message..." class="message-input" required></textarea>
+        <div class="chat-controls">
+          <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
+          <div class="file-upload-wrapper">
+            <input type="file" accept="image/*" id="file-input" hidden />
+            <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
+            <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
+          </div>
+          <button type="submit" id="send-message" class="material-symbols-rounded">arrow_upward</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
+  <script src="script.js" type="module"></script>
+
+  <script>
+    function sendQuickReply(message) {
+      document.querySelector('.message-input').value = message;
+      document.querySelector('#send-message').click();
+    }
+  </script>
+</body>
+</html>
