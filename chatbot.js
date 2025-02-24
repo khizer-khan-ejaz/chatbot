@@ -553,220 +553,116 @@ body.show-emoji-picker em-emoji-picker {
     
     `
 
-    
     document.head.appendChild(style);
       // Inject chatbot HTML into the body
       const chatbotContainer = document.createElement('div');
       chatbotContainer.innerHTML = chatbotHTML;
       document.body.appendChild(chatbotContainer);
-  
-      // Cache DOM elements
-      const chatBody = document.querySelector(".chat-body");
-      const messageInput = document.querySelector(".message-input");
-      const sendMessage = document.querySelector("#send-message");
-      const fileInput = document.querySelector("#file-input");
-      const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
-      const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
-      const chatbotToggler = document.querySelector("#chatbot-toggler");
-      const closeChatbot = document.querySelector("#close-chatbot");
-  
+      const storedToken = localStorage.getItem("chatbotToken");// Retrieve token from localStorage
+      
+      if (!storedToken || storedToken !== '199908') {
+        console.warn("Unauthorized access! Token is missing or invalid.");
+      } else {
+        console.log("Token validated. Chatbot is active.");
 
-      // Initialize user message and file data
+        // DOM elements
+        const chatBody = document.querySelector(".chat-body");
+        const messageInput = document.querySelector(".message-input");
+        const sendMessage = document.querySelector("#send-message");
+        const fileInput = document.querySelector("#file-input");
+        const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
+        const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
+        const chatbotToggler = document.querySelector("#chatbot-toggler");
+        const closeChatbot = document.querySelector("#close-chatbot");
 
-      const userData = {
-        message: null,
-        file: {
-          data: null,
-          mime_type: null,
-        },
-      };
-  
-      // Store chat history
-      const chatHistory = [];
-      const initialInputHeight = messageInput.scrollHeight;
-  
-      // Create message element with dynamic classes and return it
-      const createMessageElement = (content, ...classes) => {
-        const div = document.createElement("div");
-        div.classList.add("message", ...classes);
-        div.innerHTML = content;
-        return div;
-      };
-  
-      // Generate bot response using API
-      const generateBotResponse = async (incomingMessageDiv) => {
-        const messageElement = incomingMessageDiv.querySelector(".message-text");
-        
-        // Show typing effect for the bot
-        messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
-  
-        const userMessage = userData.message.toLowerCase();
-  
-        try {
-          // Query Firestore for a response
-          const botQuery = query(
-            collection(db, "bot_responses"),
-            where("question", "==", userMessage)
-          );
-          const querySnapshot = await getDocs(botQuery);
-  
-          let botResponseText = "Sorry, I don't understand that yet.";
-  
-          querySnapshot.forEach((doc) => {
-            botResponseText = doc.data().response;
-          });
-  
-          // Display bot's response
-          await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate typing delay
-          messageElement.innerText = botResponseText;
-  
-        } catch (error) {
-          console.error("Error fetching bot response:", error);
-          messageElement.innerText = "Error fetching response";
-          messageElement.style.color = "#ff0000";
-        } finally {
-          incomingMessageDiv.classList.remove("thinking");
-          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-        }
-      };
-  
-      // Handle outgoing user messages
-      const handleOutgoingMessage = (e) => {
-        e.preventDefault();
-        userData.message = messageInput.value.trim();
-        messageInput.value = "";
-        messageInput.dispatchEvent(new Event("input"));
-        fileUploadWrapper.classList.remove("file-uploaded");
-      
-        if (!userData.message) return;
-      
-        // Create and display user message
-        const messageContent = `<div class="message-text"></div>
-                                ${userData.file.data ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : ""}`;
-      
-        const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
-        outgoingMessageDiv.querySelector(".message-text").innerText = userData.message;
-        chatBody.appendChild(outgoingMessageDiv);
-        chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-      
-        // Simulate bot response with thinking indicator
-        setTimeout(() => {
-          const messageContent = `<div class="bot-avatar-wrapper">
-                    <img class="bot-avatar" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
-                    <span class="online-indicator"></span>
-                  </div>
-                     
-                    <div class="message-text">
-                      <div class="thinking-indicator">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                      </div>
-                    </div>`;
-      
-          const incomingMessageDiv = createMessageElement(messageContent, "bot-message", "thinking");
-          chatBody.appendChild(incomingMessageDiv);
-          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-          generateBotResponse(incomingMessageDiv);
-        }, 600);
-      };
-      
-      // Ensure the send button also triggers the form submission
-      sendMessage.addEventListener("click", (e) => {
-        document.querySelector(".chat-form").dispatchEvent(new Event("submit"));
-      });
-      messageInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault(); // Prevents new line in the input field
-          console.log("Enter key pressed, attempting to send message...");
-          
-          if (messageInput.value.trim() !== "") {
-            handleOutgoingMessage(e); // Call the function to send the message
-          } else {
-            console.log("Message input is empty, not sending.");
-          }
-        }
-      });
-      // Initialize emoji picker
-      const picker = new EmojiMart.Picker({
-        theme: "light",
-        skinTonePosition: "none",
-        previewPosition: "none",
-        onEmojiSelect: (emoji) => {
-          const { selectionStart: start, selectionEnd: end } = messageInput;
-          messageInput.setRangeText(emoji.native, start, end, "end");
-          messageInput.focus();
-        },
-        onClickOutside: (e) => {
-          if (e.target.id === "emoji-picker") {
-            document.body.classList.toggle("show-emoji-picker");
-          } else {
-            document.body.classList.remove("show-emoji-picker");
-          }
-        },
-      });
-  
-      document.querySelector(".chat-form").appendChild(picker);
-  
-      // Event listeners
-      sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
-      document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
-      closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
-      chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
-  
-      // Quick reply function
-      window.sendQuickReply = function(message) {
-        messageInput.value = message;
-        sendMessage.click();
-      };
-  
-      // Update message time
-      function updateMessageTime() {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        document.getElementById('bot-message-time').innerText = `${hours}:${minutes}`;
-      }
-  
-      // Initialize message time
-      updateMessageTime();
-  
-      // Add message input event listener for auto-resize
-      messageInput.addEventListener("input", () => {
-        messageInput.style.height = `${initialInputHeight}px`;
-        messageInput.style.height = `${messageInput.scrollHeight}px`;
-        document.querySelector(".chat-form").style.borderRadius = 
-          messageInput.scrollHeight > initialInputHeight ? "15px" : "32px";
-      });
-  
-      // File input change handler
-      fileInput.addEventListener("change", () => {
-        const file = fileInput.files[0];
-        if (!file) return;
-  
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          fileInput.value = "";
-          fileUploadWrapper.querySelector("img").src = e.target.result;
-          fileUploadWrapper.classList.add("file-uploaded");
-          const base64String = e.target.result.split(",")[1];
-  
-          userData.file = {
-            data: base64String,
-            mime_type: file.type,
-          };
+        // User message data
+        const userData = {
+          message: null,
+          file: { data: null, mime_type: null }
         };
-  
-        reader.readAsDataURL(file);
-      });
-  
-      // File cancel button handler
-      fileCancelButton.addEventListener("click", () => {
-        userData.file = {};
-        fileUploadWrapper.classList.remove("file-uploaded");
-      });
-  
-    }).catch(error => {
-      console.error('Error loading scripts:', error);
+
+        const createMessageElement = (content, ...classes) => {
+          const div = document.createElement("div");
+          div.classList.add("message", ...classes);
+          div.innerHTML = content;
+          return div;
+        };
+
+        // Store chat history
+        const chatHistory = [];
+        const initialInputHeight = messageInput.scrollHeight;
+
+        // Generate bot response using API
+        const generateBotResponse = async (incomingMessageDiv) => {
+          const messageElement = incomingMessageDiv.querySelector(".message-text");
+          // Show typing effect for the bot
+          messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+
+          const userMessage = userData.message.toLowerCase();
+
+          try {
+            // Query Firestore for a response
+            const botQuery = query(
+              collection(db, "bot_responses"),
+              where("question", "==", userMessage)
+            );
+            const querySnapshot = await getDocs(botQuery);
+
+            let botResponseText = "Sorry, I don't understand that yet.";
+
+            querySnapshot.forEach((doc) => {
+              botResponseText = doc.data().response;
+            });
+
+            // Display bot's response
+            await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate typing delay
+            messageElement.innerText = botResponseText;
+
+          } catch (error) {
+            console.error("Error fetching bot response:", error);
+            messageElement.innerText = "Error fetching response";
+            messageElement.style.color = "#ff0000";
+          } finally {
+            incomingMessageDiv.classList.remove("thinking");
+            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+          }
+        };
+
+        // Handle outgoing user messages
+        function sendQuickReply(message) {
+          document.querySelector('.message-input').value = message;
+          document.querySelector('#send-message').click();
+        }
+
+        function updateMessageTime() {
+          const now = new Date();
+          const timeString = `${now.getHours()}:${now.getMinutes()}`;
+          return timeString;
+        }
+
+        sendMessage.addEventListener("click", (e) => {
+          e.preventDefault();
+          const userMessage = messageInput.value.trim();
+          if (userMessage) {
+            const userMessageDiv = createMessageElement(`<div class="message-text">${userMessage}</div>`, "user-message");
+            chatBody.appendChild(userMessageDiv);
+
+            userData.message = userMessage;
+            messageInput.value = ""; // Reset input field
+            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+            // Send message and generate bot response
+            generateBotResponse(userMessageDiv);
+          }
+        });
+
+        closeChatbot.addEventListener("click", () => {
+          document.body.classList.toggle("show-chatbot");
+        });
+
+        chatbotToggler.addEventListener("click", () => {
+          document.body.classList.toggle("show-chatbot");
+        });
+      }
     });
   })();

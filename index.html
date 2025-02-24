@@ -90,13 +90,16 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
-  <script src="script.js" type="module"></script>
-
+  
   <script>
     function sendQuickReply(message) {
       document.querySelector('.message-input').value = message;
       document.querySelector('#send-message').click();
     }
+    const token = "199908"; // Get this from authentication
+    localStorage.setItem("chatbot_token", token);
   </script>
+  <script src="script.js" type="module"></script>
+
 </body>
 </html>

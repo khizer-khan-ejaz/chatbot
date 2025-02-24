@@ -1,3 +1,6 @@
+const secureToken = "123";
+localStorage.setItem("chatbotToken", secureToken);
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
 import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
@@ -15,37 +18,48 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const chatBody = document.querySelector(".chat-body");
-const messageInput = document.querySelector(".message-input");
-const sendMessage = document.querySelector("#send-message");
-const fileInput = document.querySelector("#file-input");
-const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
-const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
-const chatbotToggler = document.querySelector("#chatbot-toggler");
-const closeChatbot = document.querySelector("#close-chatbot");
 
 // API setup
 
 // Initialize user message and file data
-const userData = {
-  message: null,
-  file: {
-    data: null,
-    mime_type: null,
-  },
-};
+
+const storedToken = localStorage.getItem("chatbotToken");
+
+if (!storedToken || storedToken !== secureToken) {
+    console.warn("Unauthorized access! Token is missing or invalid.");
+} else {
+    console.log("Token validated. Chatbot is active.");
+    
+    // DOM elements
+    const chatBody = document.querySelector(".chat-body");
+    const messageInput = document.querySelector(".message-input");
+    const sendMessage = document.querySelector("#send-message");
+    const fileInput = document.querySelector("#file-input");
+    const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
+    const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
+    const chatbotToggler = document.querySelector("#chatbot-toggler");
+    const closeChatbot = document.querySelector("#close-chatbot");
+
+    // User message data
+    const userData = {
+        message: null,
+        file: { data: null, mime_type: null }
+    };
+
+    const createMessageElement = (content, ...classes) => {
+        const div = document.createElement("div");
+        div.classList.add("message", ...classes);
+        div.innerHTML = content;
+        return div;
+    };
 
 // Store chat history
 const chatHistory = [];
 const initialInputHeight = messageInput.scrollHeight;
 
 // Create message element with dynamic classes and return it
-const createMessageElement = (content, ...classes) => {
-  const div = document.createElement("div");
-  div.classList.add("message", ...classes);
-  div.innerHTML = content;
-  return div;
-};
+
+
 
 // Generate bot response using API
 const generateBotResponse = async (incomingMessageDiv) => {
@@ -220,3 +234,4 @@ sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
 document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
 closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
 chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+};
