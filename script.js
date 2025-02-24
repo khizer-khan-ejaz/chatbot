@@ -25,7 +25,7 @@ const db = getFirestore(app);
 
 const storedToken = localStorage.getItem("chatbotToken");
 
-if (!storedToken || storedToken !== secureToken) {
+if (!storedToken || storedToken !== "199908") {
     console.warn("Unauthorized access! Token is missing or invalid.");
 } else {
     console.log("Token validated. Chatbot is active.");

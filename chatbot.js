@@ -1,94 +1,99 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-import { getFirestore, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
-(function() {
-    // Function to load scripts dynamically
-    function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.type = 'module';
-        script.onload = () => resolve();
-        script.onerror = () => reject();
-        document.head.appendChild(script);
-      });
-    }
-  
-    // Load required scripts (only for non-module scripts)
-    Promise.all([
-      loadScript('https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js'),
-      loadScript('https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js'),
-    ]).then(() => {
-      // Initialize Firebase
-      const firebaseConfig = {
-        apiKey: 'AIzaSyBz-gI6Pmwvsp09_Qp_Q6qS3ECxAfxsAC4',
-        authDomain: 'chatbot-9ee0f.firebaseapp.com',
-        projectId: 'chatbot-9ee0f',
-        storageBucket: 'chatbot-9ee0f.firebasestorage.app',
-        messagingSenderId: '127978721082',
-        appId: '1:127978721082:web:6de1daa276b0fa12928a03',
-        measurementId: 'G-BP73ZG0D4Z',
-      };
-  
-      // Initialize Firebase app and get Firestore instance
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-  
-      // Inject HTML structure for the chatbot
-      const chatbotHTML = `
-<button id="chatbot-toggler">
-  <span class="material-symbols-rounded">mode_comment</span>
-  <span class="material-symbols-rounded">close</span>
-</button>
-
-<div class="chatbot-popup">
-  <div class="chat-header">
-    <div class="header-info">
-      <img class="chatbot-logo" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
-      <h2 class="logo-text">Chatbot</h2>
-    </div>
-    <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
-  </div>
-
-  <div class="chat-body" id="chat-body">
-    <div class="message bot-message">
-      <div class="bot-avatar-wrapper">
-        <img class="bot-avatar" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
-        <span class="online-indicator"></span>
-      </div>
-      <div class="message-text">Hey there <br /> How can I help you today?</div>
-      <div class="message-time" id="bot-message-time"></div>
-    </div>
-
-    <!-- Quick Reply Buttons -->
-    <div class="quick-replies">
-      <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
-      <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
-      <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
-    </div>
-  </div>
-
-  <div class="chat-footer">
-    <form action="#" class="chat-form" id="chat-form">
-      <textarea placeholder="Message..." class="message-input" id="message-input" required></textarea>
-      <div class="chat-controls">
-        <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
-        <div class="file-upload-wrapper">
-          <input type="file" accept="image/*" id="file-input" hidden />
-          <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
-          <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
-        </div>
-        <button type="submit" id="send-message" class="material-symbols-rounded">arrow_upward</button>
-      </div>
-    </form>
-  </div>
-</div>
- 
-`;
 
 
     // Add some basic styles for the chatbot (this can be expanded as needed)
-    const style = document.createElement('style');
+    
+    
+
+    
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, addDoc, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+    (function () {
+      // Function to load scripts dynamically
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.type = 'module';
+          script.onload = () => resolve();
+          script.onerror = () => reject();
+          document.head.appendChild(script);
+        });
+      }
+    
+      // Load required scripts (only for non-module scripts)
+      Promise.all([
+        loadScript('https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js'),
+      ]).then(() => {
+        // Initialize Firebase
+        const firebaseConfig = {
+          apiKey: 'AIzaSyBz-gI6Pmwvsp09_Qp_Q6qS3ECxAfxsAC4',
+          authDomain: 'chatbot-9ee0f.firebaseapp.com',
+          projectId: 'chatbot-9ee0f',
+          storageBucket: 'chatbot-9ee0f.appspot.com',
+          messagingSenderId: '127978721082',
+          appId: '1:127978721082:web:6de1daa276b0fa12928a03',
+          measurementId: 'G-BP73ZG0D4Z',
+        };
+    
+        // Initialize Firebase app and get Firestore instance
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        // Inject HTML structure for the chatbot
+        const chatbotHTML = `
+          <button id="chatbot-toggler">
+            <span class="material-symbols-rounded">mode_comment</span>
+            <span class="material-symbols-rounded">close</span>
+          </button>
+    
+          <div class="chatbot-popup">
+            <div class="chat-header">
+              <div class="header-info">
+                <img class="chatbot-logo" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+                <h2 class="logo-text">Chatbot</h2>
+              </div>
+              <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
+            </div>
+    
+            <div class="chat-body" id="chat-body">
+              <div class="message bot-message">
+                <div class="bot-avatar-wrapper">
+                  <img class="bot-avatar" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+                  <span class="online-indicator"></span>
+                </div>
+                <div class="message-text">Hey there <br /> How can I help you today?</div>
+                <div class="message-time" id="bot-message-time"></div>
+              </div>
+    
+              <!-- Quick Reply Buttons -->
+              <div class="quick-replies">
+                <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
+                <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
+                <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
+              </div>
+            </div>
+    
+            <div class="chat-footer">
+              <form action="#" class="chat-form" id="chat-form">
+                <textarea placeholder="Message..." class="message-input" id="message-input" required></textarea>
+                <div class="chat-controls">
+                  <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
+                  <div class="file-upload-wrapper">
+                    <input type="file" accept="image/*" id="file-input" hidden />
+                    <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
+                    <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
+                  </div>
+                  <button type="submit" id="send-message" class="material-symbols-rounded">arrow_upward</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+    
+        // Add some basic styles for the chatbot (this can be expanded as needed)
+        const style = document.createElement('style');
     style.innerHTML =`
     /* Importing Google Fonts - Inter */
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap');
@@ -124,7 +129,7 @@ body {
       transition: background-color 0.3s;
     }
     .quick-reply:hover {
-      background-color: #0056b3;
+      background-color:rgb(236, 245, 255);
     }
     .message-time {
       font-size: 12px;
@@ -289,12 +294,12 @@ body.show-chatbot .chatbot-popup {
   margin-bottom: 42px;
   flex-direction: column;
   scrollbar-width: thin;
-  scrollbar-color: #b9fdff transparent;
+  scrollbar-color:rgb(235, 230, 230) transparent;
 }
 
 .chat-body,
 .chat-form .message-input:hover {
-  scrollbar-color: #b9fdff transparent;
+  scrollbar-color:rgb(200, 202, 202) transparent;
 }
 
 .chat-body .message {
@@ -552,20 +557,20 @@ body.show-emoji-picker em-emoji-picker {
     
     
     `
+        document.head.appendChild(style);
+    
+        // Inject chatbot HTML into the body
+        const chatbotContainer = document.createElement('div');
+        chatbotContainer.innerHTML = chatbotHTML;
+        document.body.appendChild(chatbotContainer);
+        const storedToken = localStorage.getItem("chatbotToken");
 
-    document.head.appendChild(style);
-      // Inject chatbot HTML into the body
-      const chatbotContainer = document.createElement('div');
-      chatbotContainer.innerHTML = chatbotHTML;
-      document.body.appendChild(chatbotContainer);
-      const storedToken = localStorage.getItem("chatbotToken");// Retrieve token from localStorage
-      
-      if (!storedToken || storedToken !== '199908') {
-        console.warn("Unauthorized access! Token is missing or invalid.");
-      } else {
-        console.log("Token validated. Chatbot is active.");
-
-        // DOM elements
+        if (!storedToken || storedToken !== "199908") {
+            console.warn("Unauthorized access! Token is missing or invalid.");
+        }
+        else {
+          console.log("Token validated. Chatbot is active.");
+        // Cache DOM elements
         const chatBody = document.querySelector(".chat-body");
         const messageInput = document.querySelector(".message-input");
         const sendMessage = document.querySelector("#send-message");
@@ -574,32 +579,126 @@ body.show-emoji-picker em-emoji-picker {
         const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
         const chatbotToggler = document.querySelector("#chatbot-toggler");
         const closeChatbot = document.querySelector("#close-chatbot");
-
+    
         // User message data
         const userData = {
           message: null,
-          file: { data: null, mime_type: null }
+          file: { data: null, mime_type: null },
         };
-
+    
+        // Function to create a message element
         const createMessageElement = (content, ...classes) => {
           const div = document.createElement("div");
           div.classList.add("message", ...classes);
           div.innerHTML = content;
           return div;
         };
+    
+        // Function to store chat messages in Firestore
+        const storeChatMessage = async (message, sender, file = null) => {
+          try {
+            const chatRef = collection(db, "chats");
+            await addDoc(chatRef, {
+              message: message,
+              sender: sender,
+              timestamp: new Date(),
+              file: file ? { data: file.data, mime_type: file.mime_type } : null,
+            });
+          } catch (error) {
+            console.error("Error storing chat message:", error);
+          }
+        };
+    
+        // Function to load chat history from Firestore
 
-        // Store chat history
-        const chatHistory = [];
-        const initialInputHeight = messageInput.scrollHeight;
-
+       
+        // Handle outgoing user messages
+        const handleOutgoingMessage = async (e) => {
+          e.preventDefault();
+          userData.message = messageInput.value.trim();
+          messageInput.value = "";
+          messageInput.dispatchEvent(new Event("input"));
+          fileUploadWrapper.classList.remove("file-uploaded");
+    
+          if (!userData.message) return;
+    
+          // Create and display user message
+          const messageContent = `<div class="message-text"></div>
+                                  ${userData.file.data ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : ""}`;
+    
+          const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
+          outgoingMessageDiv.querySelector(".message-text").innerText = userData.message;
+          chatBody.appendChild(outgoingMessageDiv);
+          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+    
+          // Store the user's message in Firestore
+          await storeChatMessage(userData.message, "user", userData.file);
+    
+          // Simulate bot response with thinking indicator
+          setTimeout(async () => {
+            const messageContent = `<div class="bot-avatar-wrapper">
+                  <img class="bot-avatar" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+                  <span class="online-indicator"></span>
+                </div>
+                <div class="message-text">
+                  <div class="thinking-indicator">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                  </div>
+                </div>`;
+    
+            const incomingMessageDiv = createMessageElement(messageContent, "bot-message", "thinking");
+            chatBody.appendChild(incomingMessageDiv);
+            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+            const botResponse = await generateBotResponse(incomingMessageDiv);
+    
+            // Store the bot's response in Firestore
+            await storeChatMessage(botResponse, "bot");
+          }, 600);
+        };
+        window.sendQuickReply = function (message) {
+          messageInput.value = message; // Set the quick reply message
+          document.querySelector('#send-message').click(); // Trigger send message
+        };
+        messageInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault(); // Prevents new line in the input field
+            console.log("Enter key pressed, attempting to send message...");
+            
+            if (messageInput.value.trim() !== "") {
+              handleOutgoingMessage(e); // Call the function to send the message
+            } else {
+              console.log("Message input is empty, not sending.");
+            }
+          }
+        });        
         // Generate bot response using API
+        const uploadImageToFirebase = async (file) => {
+          if (!file) return null;
+        
+          const storageRef = ref(storage, `chat_images/${Date.now()}_${file.name}`);
+          try {
+            // Upload file to Firebase Storage
+            const snapshot = await uploadBytes(storageRef, file);
+            
+            // Get the file URL after upload
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            
+            return downloadURL;
+          } catch (error) {
+            console.error("Error uploading file:", error);
+            return null;
+          }
+        };
         const generateBotResponse = async (incomingMessageDiv) => {
           const messageElement = incomingMessageDiv.querySelector(".message-text");
+    
           // Show typing effect for the bot
           messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
-
+    
           const userMessage = userData.message.toLowerCase();
-
+    
           try {
             // Query Firestore for a response
             const botQuery = query(
@@ -607,62 +706,96 @@ body.show-emoji-picker em-emoji-picker {
               where("question", "==", userMessage)
             );
             const querySnapshot = await getDocs(botQuery);
-
+    
             let botResponseText = "Sorry, I don't understand that yet.";
-
+    
             querySnapshot.forEach((doc) => {
               botResponseText = doc.data().response;
             });
-
+    
             // Display bot's response
             await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate typing delay
             messageElement.innerText = botResponseText;
-
+    
+            return botResponseText; // Return the bot's response text
           } catch (error) {
             console.error("Error fetching bot response:", error);
             messageElement.innerText = "Error fetching response";
             messageElement.style.color = "#ff0000";
+            return "Error fetching response";
           } finally {
             incomingMessageDiv.classList.remove("thinking");
             chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
           }
         };
-
-        // Handle outgoing user messages
-        function sendQuickReply(message) {
-          document.querySelector('.message-input').value = message;
-          document.querySelector('#send-message').click();
-        }
-
-        function updateMessageTime() {
-          const now = new Date();
-          const timeString = `${now.getHours()}:${now.getMinutes()}`;
-          return timeString;
-        }
-
-        sendMessage.addEventListener("click", (e) => {
-          e.preventDefault();
-          const userMessage = messageInput.value.trim();
-          if (userMessage) {
-            const userMessageDiv = createMessageElement(`<div class="message-text">${userMessage}</div>`, "user-message");
-            chatBody.appendChild(userMessageDiv);
-
-            userData.message = userMessage;
-            messageInput.value = ""; // Reset input field
-            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-
-            // Send message and generate bot response
-            generateBotResponse(userMessageDiv);
-          }
-        });
-
-        closeChatbot.addEventListener("click", () => {
-          document.body.classList.toggle("show-chatbot");
-        });
-
+    
+        // Event listeners
+        sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
+        document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
+        closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
         chatbotToggler.addEventListener("click", () => {
           document.body.classList.toggle("show-chatbot");
+         
         });
-      }
-    });
-  })();
+    
+        // Handle file input change and preview the selected file
+        fileInput.addEventListener("change", () => {
+          const file = fileInput.files[0];
+          if (!file) return;
+        
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            fileInput.value = "";
+        
+            // Check if an <img> tag exists inside fileUploadWrapper
+            let imgElement = fileUploadWrapper.querySelector("img");
+            
+            if (!imgElement) {
+              imgElement = document.createElement("img");
+              imgElement.classList.add("preview-image"); // Optional: Add a class for styling
+              fileUploadWrapper.appendChild(imgElement);
+            }
+        
+            imgElement.src = e.target.result;
+            fileUploadWrapper.classList.add("file-uploaded");
+        
+            const base64String = e.target.result.split(",")[1];
+        
+            // Store file data in userData
+            userData.file = {
+              data: base64String,
+              mime_type: file.type,
+            };
+          };
+        
+          reader.readAsDataURL(file);
+        });
+    
+        // Cancel file upload
+        fileCancelButton.addEventListener("click", () => {
+          userData.file = {};
+          fileUploadWrapper.classList.remove("file-uploaded");
+        });
+    
+        // Initialize emoji picker
+        const picker = new EmojiMart.Picker({
+          theme: "light",
+          skinTonePosition: "none",
+          previewPosition: "none",
+          onEmojiSelect: (emoji) => {
+            const { selectionStart: start, selectionEnd: end } = messageInput;
+            messageInput.setRangeText(emoji.native, start, end, "end");
+            messageInput.focus();
+          },
+          onClickOutside: (e) => {
+            if (e.target.id === "emoji-picker") {
+              document.body.classList.toggle("show-emoji-picker");
+            } else {
+              document.body.classList.remove("show-emoji-picker");
+            }
+          },
+        });
+    
+        document.querySelector(".chat-form").appendChild(picker);
+     } });
+    })();
