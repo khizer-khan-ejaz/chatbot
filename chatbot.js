@@ -43,7 +43,7 @@
           <div class="chatbot-popup">
             <div class="chat-header">
               <div class="header-info">
-                <img class="chatbot-logo" src="https://res.cloudinary.com/dv3eg07pt/image/upload/v1740480957/df20hslpogwd00ztrvin.png" alt="Chatbot Logo" width="50" height="50">
+                <img class="chatbot-logo" src="https://e7.pngegg.com/pngimages/498/917/png-clipart-computer-icons-desktop-chatbot-icon-blue-angle-thumbnail.png" alt="Chatbot Logo" width="50" height="50">
                 <h2 class="logo-text">Chatbot</h2>
               </div>
               <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
@@ -52,7 +52,7 @@
             <div class="chat-body" id="chat-body">
               <div class="message bot-message">
                 <div class="bot-avatar-wrapper">
-                    <img class="bot-avatar" src="https://res.cloudinary.com/dv3eg07pt/image/upload/v1740480957/df20hslpogwd00ztrvin.png" alt="Chatbot Logo" width="50" height="50">
+                    <img class="bot-avatar" src="https://e7.pngegg.com/pngimages/498/917/png-clipart-computer-icons-desktop-chatbot-icon-blue-angle-thumbnail.png" alt="Chatbot Logo" width="50" height="50">
                     <span class="online-indicator"></span>
                 </div>
                 <div class="message-text">Hey there <br /> How can I help you today?</div>
@@ -628,7 +628,7 @@
           // Simulate bot response with thinking indicator
           setTimeout(async () => {
             const messageContent = `<div class="bot-avatar-wrapper">
-                  <img class="bot-avatar" src="https://res.cloudinary.com/dv3eg07pt/image/upload/v1740480957/df20hslpogwd00ztrvin.png" alt="Chatbot Logo" width="50" height="50">
+                  <img class="bot-avatar" src="https://e7.pngegg.com/pngimages/498/917/png-clipart-computer-icons-desktop-chatbot-icon-blue-angle-thumbnail.png" alt="Chatbot Logo" width="50" height="50">
                   <span class="online-indicator"></span>
                 </div>
                 <div class="message-text">
