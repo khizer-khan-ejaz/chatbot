@@ -43,7 +43,7 @@
           <div class="chatbot-popup">
             <div class="chat-header">
               <div class="header-info">
-                <img class="chatbot-logo" src="https://cdn.jsdelivr.net/gh/khizer-khan-ejaz/chatbot@main/robotic.png" alt="Chatbot Logo" width="50" height="50">
+                <img class="chatbot-logo" src="https://res.cloudinary.com/dv3eg07pt/image/upload/v1740480957/df20hslpogwd00ztrvin.png" alt="Chatbot Logo" width="50" height="50">
                 <h2 class="logo-text">Chatbot</h2>
               </div>
               <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
@@ -52,8 +52,8 @@
             <div class="chat-body" id="chat-body">
               <div class="message bot-message">
                 <div class="bot-avatar-wrapper">
-                  <img class="bot-avatar" src="https://cdn.jsdelivr.net/gh/khizer-khan-ejaz/chatbot@main/robotic.png" alt="Chatbot Logo" width="50" height="50">
-                  <span class="online-indicator"></span>
+                    <img class="bot-avatar" src="https://res.cloudinary.com/dv3eg07pt/image/upload/v1740480957/df20hslpogwd00ztrvin.png" alt="Chatbot Logo" width="50" height="50">
+                    <span class="online-indicator"></span>
                 </div>
                 <div class="message-text">Hey there <br /> How can I help you today?</div>
                 <div class="message-time" id="bot-message-time"></div>
@@ -604,7 +604,7 @@
 
        
         // Handle outgoing user messages
-        const handleOutgoingMessage = async (e) => {
+         const handleOutgoingMessage = async (e) => {
           e.preventDefault();
           userData.message = messageInput.value.trim();
           messageInput.value = "";
@@ -628,7 +628,7 @@
           // Simulate bot response with thinking indicator
           setTimeout(async () => {
             const messageContent = `<div class="bot-avatar-wrapper">
-                  <img class="bot-avatar" src="https://cdn.jsdelivr.net/gh/khizer-khan-ejaz/chatbot@main/robotic.png" alt="Chatbot Logo" width="50" height="50">
+                  <img class="bot-avatar" src="https://res.cloudinary.com/dv3eg07pt/image/upload/v1740480957/df20hslpogwd00ztrvin.png" alt="Chatbot Logo" width="50" height="50">
                   <span class="online-indicator"></span>
                 </div>
                 <div class="message-text">
