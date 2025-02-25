@@ -1,12 +1,4 @@
-
-
-
-    // Add some basic styles for the chatbot (this can be expanded as needed)
-    
-    
-
-    
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
     import { getFirestore, collection, query, where, getDocs, addDoc, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
     (function () {
@@ -51,7 +43,7 @@
           <div class="chatbot-popup">
             <div class="chat-header">
               <div class="header-info">
-                <img class="chatbot-logo" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+                <img class="chatbot-logo" src="https://ibb.co/3YdNsvBp" alt="Chatbot Logo" width="50" height="50">
                 <h2 class="logo-text">Chatbot</h2>
               </div>
               <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
@@ -60,7 +52,7 @@
             <div class="chat-body" id="chat-body">
               <div class="message bot-message">
                 <div class="bot-avatar-wrapper">
-                  <img class="bot-avatar" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+                  <img class="bot-avatar" src="https://ibb.co/3YdNsvBp" alt="Chatbot Logo" width="50" height="50">
                   <span class="online-indicator"></span>
                 </div>
                 <div class="message-text">Hey there <br /> How can I help you today?</div>
@@ -81,7 +73,7 @@
                 <div class="chat-controls">
                   <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
                   <div class="file-upload-wrapper">
-                    <input type="file" accept="image/*" id="file-input" hidden />
+                   <input type="file" accept="image/*,application/pdf" id="file-input" hidden />
                     <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
                     <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
                   </div>
@@ -559,7 +551,7 @@ body.show-emoji-picker em-emoji-picker {
     `
         document.head.appendChild(style);
     
-        // Inject chatbot HTML into the body
+    
         const chatbotContainer = document.createElement('div');
         chatbotContainer.innerHTML = chatbotHTML;
         document.body.appendChild(chatbotContainer);
@@ -570,7 +562,7 @@ body.show-emoji-picker em-emoji-picker {
         }
         else {
           console.log("Token validated. Chatbot is active.");
-        // Cache DOM elements
+    
         const chatBody = document.querySelector(".chat-body");
         const messageInput = document.querySelector(".message-input");
         const sendMessage = document.querySelector("#send-message");
@@ -580,21 +572,19 @@ body.show-emoji-picker em-emoji-picker {
         const chatbotToggler = document.querySelector("#chatbot-toggler");
         const closeChatbot = document.querySelector("#close-chatbot");
     
-        // User message data
         const userData = {
           message: null,
           file: { data: null, mime_type: null },
         };
     
-        // Function to create a message element
-        const createMessageElement = (content, ...classes) => {
+          const createMessageElement = (content, ...classes) => {
           const div = document.createElement("div");
           div.classList.add("message", ...classes);
           div.innerHTML = content;
           return div;
         };
     
-        // Function to store chat messages in Firestore
+        
         const storeChatMessage = async (message, sender, file = null) => {
           try {
             const chatRef = collection(db, "chats");
@@ -637,7 +627,7 @@ body.show-emoji-picker em-emoji-picker {
           // Simulate bot response with thinking indicator
           setTimeout(async () => {
             const messageContent = `<div class="bot-avatar-wrapper">
-                  <img class="bot-avatar" src="robotic.png" alt="Chatbot Logo" width="50" height="50">
+                  <img class="bot-avatar" src="https://ibb.co/3YdNsvBp" alt="Chatbot Logo" width="50" height="50">
                   <span class="online-indicator"></span>
                 </div>
                 <div class="message-text">
