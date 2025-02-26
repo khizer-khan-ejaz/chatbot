@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-import { getFirestore, collection, query, where, getDocs, addDoc, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+import { getFirestore, collection, query, where, getDocs, addDoc, orderBy,deleteDoc} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 (function () {
   // Function to load scripts dynamically
@@ -62,7 +62,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
         <div class="chat-header">
           <div class="header-info">
             <img class="chatbot-logo" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
-            <h2 class="logo-text">khadargroups</h2>
+            <h2 class="logo-text">KhadarGroups</h2>
           </div>
          <div> 
           <button id="resetChatHistory" class="material-symbols-rounded">refresh</button>
@@ -81,13 +81,13 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
             <div class="message-time" id="bot-message-time"></div>
           </div>
 
-          <!-- Quick Reply Buttons -->
-          <div class="quick-replies">
-            <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
-            <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
-            <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
+            <!-- Quick Reply Buttons -->
+            <div class="quick-replies">
+              <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
+              <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
+              <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
+            </div>
           </div>
-        </div>
 
         <div class="chat-footer">
           <form action="#" class="chat-form" id="chat-form">
@@ -108,8 +108,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
     // Add some basic styles for the chatbot (this can be expanded as needed)
     const style = document.createElement('style');
-    style.innerHTML =`
-    /* Importing Google Fonts - Inter */
+    style.innerHTML =`/* Importing Google Fonts - Inter */
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap');
 
 * {
@@ -122,36 +121,38 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 body {
   width: 100%;
   min-height: 100vh;
-
 }
 
 .quick-replies {
-      display: flex;
-      gap: 5px;
-      
-      flex-wrap: wrap;
-     
-    }
-    .quick-reply {
-      border:1px solid #ee5d27;
-      
-      color: #ee5d27;
-      
-      padding: 8px 12px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color 0.3s;
-    }
-    .quick-reply:hover {
-      background-color:rgb(236, 245, 255);
-    }
-    .message-time {
-      font-size: 12px;
-      color: gray;
-      margin-top: 5px;
-      text-align: left;
-    }
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-wrap: wrap;
+  width: 220px; /* Set desired width here */
+  margin: 0 auto;
+}
+
+.quick-reply {
+  border: 1px solid #ee5d27;
+  color: #ee5d27;
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.quick-reply:hover {
+  background-color: rgb(236, 245, 255);
+}
+
+.message-time {
+  font-size: 12px;
+  color: gray;
+  margin-top: 5px;
+  text-align: left;
+}
+
 #chatbot-toggler {
   position: fixed;
   bottom: 10px;
@@ -167,22 +168,24 @@ body {
   background: #ee5d27;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
-  z-index:200;
+  z-index: 200;
 }
-  .message-box {
-    max-width: 100%;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
+
+.message-box {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .bot-link {
-    color: blue;
-    text-decoration: underline;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
+  color: blue;
+  text-decoration: underline;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
+
 .dot {
   display: inline-block;
   width: 8px;
@@ -200,7 +203,7 @@ body {
 .dot:nth-child(3) {
   animation-delay: 0.4s;
 }
-  
+
 .bot-avatar-wrapper {
   position: absolute; /* Position the avatar absolutely */
   top: 0; /* Place it at the top */
@@ -233,11 +236,11 @@ body {
     transform: translateY(-10px);
   }
 }
+
 .message {
   position: relative; /* Make the container a positioning context */
   padding-left: 40px; /* Add padding to prevent text overlap with the avatar */
 }
-
 
 body.show-chatbot #chatbot-toggler {
   transform: rotate(90deg);
@@ -258,19 +261,19 @@ body.show-chatbot #chatbot-toggler span:last-child {
 }
 
 .chatbot-popup {
-    position: fixed;
-    right: 35px;
-    bottom: 80px;
-    width: 420px;
-    overflow: hidden;
-    background: #ececec;
-    border-radius: 15px;
-    opacity: 0;
-    pointer-events: none;
-    transform: scale(0.2);
-    transform-origin: bottom right;
-    box-shadow: 0 0 128px 0 rgba(0, 0, 0, 0.1), 0 32px 64px -48px rgba(0, 0, 0, 0.5);
-    transition: all 0.1s ease;
+  position: fixed;
+  right: 35px;
+  bottom: 80px;
+  width: 420px;
+  overflow: hidden;
+  background: #ececec;
+  border-radius: 15px;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.2);
+  transform-origin: bottom right;
+  box-shadow: 0 0 128px 0 rgba(0, 0, 0, 0.1), 0 32px 64px -48px rgba(0, 0, 0, 0.5);
+  transition: all 0.1s ease;
   z-index: 120;
 }
 
@@ -340,8 +343,8 @@ body.show-chatbot .chatbot-popup {
 }
 
 .chat-header #close-chatbot:hover {
-  background: #005f63;
-}   
+  background: #005f63);
+}
 
 .chat-body {
   padding: 15px 22px;
@@ -352,12 +355,12 @@ body.show-chatbot .chatbot-popup {
   margin-bottom: 78px;
   flex-direction: column;
   scrollbar-width: thin;
-  scrollbar-color:rgb(235, 230, 230) transparent;
+  scrollbar-color: rgb(235, 230, 230) transparent;
 }
 
 .chat-body,
 .chat-form .message-input:hover {
-  scrollbar-color:rgb(200, 202, 202) transparent;
+  scrollbar-color: rgb(200, 202, 202) transparent;
 }
 
 .chat-body .message {
@@ -369,19 +372,17 @@ body.show-chatbot .chatbot-popup {
 .chat-body .message .bot-avatar {
   width: 35px;
   height: 35px;
-  
   fill: #fff;
   flex-shrink: 0;
   margin-bottom: 2px;
   align-self: flex-end;
   border-radius: 50%;
-  
 }
 
 .chat-body .message .message-text {
-  padding: 12px 16px;
-  max-width: 75%;
-  font-size: 0.95rem;
+  padding: 12px 14px;
+  max-width: 95%;
+  font-size: 0.85rem;
 }
 
 .chat-body .bot-message.thinking .message-text {
@@ -611,10 +612,7 @@ body.show-emoji-picker em-emoji-picker {
   .chat-form .file-upload-wrapper.file-uploaded #file-cancel {
     opacity: 0;
   }
-}
-    
-    
-    `
+}`
     document.head.appendChild(style);
 
 
@@ -685,11 +683,38 @@ body.show-emoji-picker em-emoji-picker {
                 return;
             }
     
-            // Clear existing messages except the welcome message
-            const welcomeMessage = chatBody.querySelector(".bot-message");
-            const Quickmessage = chatBody.querySelector("..quick-reply");
-
-            chatBody.innerHTML = welcomeMessage ? welcomeMessage.outerHTML  : "";
+            // Check if it's the first conversation (using localStorage to store the flag)
+            const isFirstConversation = !localStorage.getItem('firstConversationDone');
+    
+            // Clear existing messages
+            chatBody.innerHTML = "";
+    
+            // If it's the first conversation, show welcome message and quick replies
+            if (isFirstConversation) {
+                const welcomeMessage = `<div class="bot-avatar-wrapper">
+                    <img class="bot-avatar" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
+                    <span class="online-indicator"></span>
+                </div>
+                <div class="message-text">Welcome! How can I assist you today?</div>`;
+    
+                const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
+                chatBody.appendChild(welcomeMessageDiv);
+    
+                // Quick message with options
+                const quickMessage = `<div class="quick-replies">
+                    <button class="quick-reply" onclick="sendQuickReply('What are your services?')">menu</button>
+                    <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')"> Famous product </button>
+                    <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')"></button>
+                </div>`;
+    
+                const quickMessageDiv = document.createElement("div");
+                quickMessageDiv.classList.add("bot-message");
+                quickMessageDiv.innerHTML = quickMessage;
+                chatBody.appendChild(quickMessageDiv);
+    
+                // Mark the first conversation as done to avoid showing quick messages again
+                localStorage.setItem('firstConversationDone', 'true');
+            }
     
             // Loop through messages and display them
             querySnapshot.forEach((doc) => {
@@ -719,6 +744,7 @@ body.show-emoji-picker em-emoji-picker {
             console.error("Error loading chat history:", error);
         }
     };
+    
       // Handle outgoing user messages
       const handleOutgoingMessage = async (e) => {
         e.preventDefault();
@@ -747,7 +773,7 @@ body.show-emoji-picker em-emoji-picker {
         // Simulate bot response with thinking indicator
         setTimeout(async () => {
           const messageContent = `<div class="bot-avatar-wrapper">
-                <img class="bot-avatar" src="https://i.ibb.co/6Rrd9h13/robotic.png" alt="Chatbot Logo" width="50" height="50">
+                <img class="bot-avatar" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
                 <span class="online-indicator"></span>
               </div>
               <div class="message-text">
@@ -860,17 +886,65 @@ body.show-emoji-picker em-emoji-picker {
             chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
         }
     };
-    const resetChatHistory = () => {
+    const resetChatHistory = async () => {
       const chatBody = document.querySelector(".chat-body");
       if (chatBody) {
-          // Clear the chat UI except the welcome message
-          const welcomeMessage = chatBody.querySelector(".bot-message");
-          chatBody.innerHTML = welcomeMessage ? welcomeMessage.outerHTML : "";
-          console.log("Chat history reset successfully.");
+          // Clear the chat UI
+          chatBody.innerHTML = "";
+  
+          // Delete chat history from Firestore
+          await deleteChatHistoryFromFirestore();
+  
+          // Add welcome message back
+          const welcomeMessage = `<div class="bot-avatar-wrapper">
+              <img class="bot-avatar" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
+              <span class="online-indicator"></span>
+          </div>
+          <div class="message-text">Welcome! How can I assist you today?</div>`;
+  
+          const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
+          chatBody.appendChild(welcomeMessageDiv);
+  
+          // Add quick replies (suggestion box)
+          const quickMessage = `<div class="quick-replies">
+              <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
+              <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
+              <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
+          </div>`;
+  
+          const quickMessageDiv = document.createElement("div");
+          quickMessageDiv.classList.add("bot-message");
+          quickMessageDiv.innerHTML = quickMessage;
+          chatBody.appendChild(quickMessageDiv);
+  
+          // Set a flag in localStorage to indicate we should not load chat history on next open
+          localStorage.setItem('skipLoadingChatHistory', 'true');
+  
+          console.log("Chat display reset successfully. Chat history deleted from Firestore.");
       } else {
           console.error("Chat body not found!");
       }
   };
+  
+  
+    // Function to delete chat history from Firestore
+    const deleteChatHistoryFromFirestore = async () => {
+      try {
+        const chatRef = collection(db, "chats");
+        const q = query(chatRef, where("browserId", "==", currentBrowserId));
+    
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(async (doc) => {
+          await deleteDoc(doc.ref);
+        });
+    
+        console.log("Chat history deleted from Firestore successfully.");
+      } catch (error) {
+        console.error("Error deleting chat history from Firestore:", error);
+      }
+    };
+
+  
   
   // Add event listener to the reset button
   document.getElementById("resetChatHistory").addEventListener("click", resetChatHistory);
@@ -881,12 +955,21 @@ body.show-emoji-picker em-emoji-picker {
       chatbotToggler.addEventListener("click", () => {
         document.body.classList.toggle("show-chatbot");
         
-        // Load chat history when the chatbot is opened
+        // Load chat history when the chatbot is opened, but check the skip flag
         if (document.body.classList.contains("show-chatbot")) {
-          loadChatHistory();
+          // Check if we should skip loading history
+          const skipLoading = localStorage.getItem('skipLoadingChatHistory') === 'true';
+          
+          if (skipLoading) {
+            // Clear the flag so we'll load history next time
+            localStorage.removeItem('skipLoadingChatHistory');
+            console.log("Skipping chat history load as requested by reset function");
+          } else {
+            // Load chat history normally
+            loadChatHistory();
+          }
         }
       });
-
       // Handle file input change and preview the selected file
       fileInput.addEventListener("change", () => {
         const file = fileInput.files[0];
