@@ -181,10 +181,10 @@ body {
 
 @media only screen and (max-width: 480px) {
   #chatbot-toggler {
-    bottom: 130px !important;
-    right: 40px !important;
-    height: 40px !important;
-    width: 40px !important;
+    bottom: 30px !important;
+    right: 10px !important;
+    height: 50px !important;
+    width: 50px !important;
   }
 }   
 
