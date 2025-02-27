@@ -168,8 +168,25 @@ body {
   background: #ee5d27;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
-  z-index: 200;
+  z-index: 22200;
 }
+@media (max-width: 768px) {
+  #chatbot-toggler {
+    bottom: 190px;
+    right: 40px;
+    height: 50px;
+    width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  #chatbot-toggler {
+     bottom: 190px;
+      right: 40px;
+    height: 40px;
+    width: 40px;
+  }
+}  
 
 .message-box {
   max-width: 100%;
