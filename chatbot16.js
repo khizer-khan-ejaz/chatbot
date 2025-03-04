@@ -17,11 +17,8 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
   // Load required scripts (only for non-module scripts)
   Promise.all([
     loadScript('https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js'),
-    loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'),
-    loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'),
   ]).then(() => {
     // Initialize Firebase
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const firebaseConfig = {
       apiKey: 'AIzaSyBz-gI6Pmwvsp09_Qp_Q6qS3ECxAfxsAC4',
       authDomain: 'chatbot-9ee0f.firebaseapp.com',
@@ -64,21 +61,20 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       <div class="chatbot-popup">
         <div class="chat-header">
           <div class="header-info">
-            <img class="chatbot-logo" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+            <img class="chatbot-logo" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
             <h2 class="logo-text">KhadarGroups</h2>
           </div>
-         <div> 
-         <button id="resetChatHistory" class="material-symbols-rounded">delete</button>
-
-         <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
-         
+        <div> 
+          <button id="resetChatHistory" class="material-symbols-rounded">refresh</button>
+        <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
+        
         </div>
           </div>
 
         <div class="chat-body" id="chat-body">
           <div class="message bot-message">
             <div class="bot-avatar-wrapper">
-              <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+              <img class="bot-avatar" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
               <span class="online-indicator"></span>
             </div>
             <div class="message-text">Hey there <br /> How can I help you today?</div>
@@ -99,7 +95,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
             <div class="chat-controls">
               <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
               <div class="file-upload-wrapper">
-                <input type="file" accept="image/*,application/pdf" id="file-input" hidden />
+                <input type="file" accept="image/*" id="file-input" hidden />
                 <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
                 <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
               </div>
@@ -133,7 +129,7 @@ body {
   gap: 5px;
   flex-wrap: wrap;
   width: 280px; /* Set desired width here */
- margin-left:38px;
+margin-left:38px;
 }
 
 .quick-reply {
@@ -770,288 +766,122 @@ body.show-emoji-picker em-emoji-picker {
         }
       };
       // Handle outgoing user messages
-      const generateBotResponse = async (incomingMessageDiv) => {
-        const messageElement = incomingMessageDiv.querySelector(".message-text");
+      const handleOutgoingMessage = async (e) => {
+        e.preventDefault();
     
-        // Show typing effect for the bot
-        messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+        // Start the overall timer
+        const overallStartTime = performance.now();
     
-        const userMessage = userData.message.toLowerCase();
-        const userImageData = userData.file.data;
-        const userImageMimeType = userData.file.mime_type;
+        userData.message = messageInput.value.trim();
+        messageInput.value = "";
+        messageInput.dispatchEvent(new Event("input"));
+        fileUploadWrapper.classList.remove("file-uploaded");
     
-        try {
-            // Prepare request data
-            const requestData = { 
-                message: userMessage, 
-                browserId: currentBrowserId 
-            };
-            
-            // Add image data if available
-            if (userImageData) {
-                requestData.image = {
-                    data: userImageData,
-                    mime_type: userImageMimeType
-                };
-            }
+        if (!userData.message && !userData.file.data) return; // Ensure we send something
     
-            // API call to FastAPI endpoint
-            const apiResponse = await fetch('https://fastapi-vercel-iota.vercel.app/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestData),
-            });
+        // Start timer for creating and displaying user message
+        const createMessageStartTime = performance.now();
     
-            if (!apiResponse.ok) {
-                throw new Error('Failed to fetch bot response');
-            }
+        // Create and display user message
+        const messageContent = `<div class="message-text"></div>
+                              ${userData.file.data ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : ""}`;
     
-            const data = await apiResponse.json();
-            let botResponseText = data.response || "Sorry, I don't understand that yet.";
-    
-            // Convert "Link" text to actual hyperlinks
-            botResponseText = botResponseText.replace(/- Link$/gm, "• LINK_PLACEHOLDER");
-            botResponseText = botResponseText.replace(/\[Link\]\(/g, "");
-    
-            // Convert URLs to clickable links
-            botResponseText = botResponseText.replace(
-                /https?:\/\/[^\s()]+(?:\([^\)]*\)|[^\s]*)*/g,
-                (url) => {
-                    if (url.endsWith(')') && !url.includes('(')) {
-                        url = url.slice(0, -1);
-                    }
-                    return `<a href="${url}" target="_blank" class="bot-link">[Link]</a>`;
-                }
-            );
-            
-            // Replace newlines with <br> tags for HTML display
-            botResponseText = botResponseText.replace(/\n/g, '<br>');
-    
-            // Convert **text** to <strong>text</strong> for bold formatting
-            botResponseText = botResponseText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-            // Replace "-" with "•" (bullet point)
-            botResponseText = botResponseText.replace(/(\n|^)[\s\u200B\u00A0]*-\s+/g, "$1• ");
-            
-            // Replace "LINK_PLACEHOLDER" with actual links
-            botResponseText = botResponseText.replace(/• LINK_PLACEHOLDER/g, (match, index, fullText) => {
-                const previousText = fullText.substring(0, index);
-                const productNameMatch = previousText.match(/<strong>(.*?)<\/strong>/);
-                const productName = productNameMatch ? productNameMatch[1] : "Product";
-                return `• <a href="#" class="product-link">View ${productName}</a>`;
-            });
-    
-            // Handle images returned from API if any
-            if (data.image_response) {
-                botResponseText += `<br><img src="data:image/jpeg;base64,${data.image_response}" class="bot-image" />`;
-            }
-    
-            // Display bot's response after a small delay
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            messageElement.innerHTML = botResponseText;
-    
-            return botResponseText;
-        } catch (error) {
-            console.error("Error fetching bot response:", error);
-            messageElement.innerText = "Error fetching response";
-            messageElement.style.color = "#ff0000";
-            return "Error fetching response";
-        } finally {
-            incomingMessageDiv.classList.remove("thinking");
-            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-        }
-    };
-   
-    const extractTextFromPDF = async (pdfData) => {
-      try {
-        // Load the PDF data
-        const loadingTask = pdfjsLib.getDocument({data: atob(pdfData)});
-        const pdf = await loadingTask.promise;
-        
-        let extractedText = '';
-        
-        // Extract text from each page
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map(item => item.str).join(' ');
-          extractedText += `Page ${i}:\n${pageText}\n\n`;
-        }
-        
-        return extractedText.trim();
-      } catch (error) {
-        console.error("Error extracting text from PDF:", error);
-        return "Error extracting text from PDF";
-      }
-    };
-    
-    // 4. Modify the handleOutgoingMessage function to handle PDFs
-    const handleOutgoingMessage = async (e) => {
-      e.preventDefault();
-      userData.message = messageInput.value.trim();
-      messageInput.value = "";
-      messageInput.dispatchEvent(new Event("input"));
-    
-      // Check if we have either text or a file to send
-      if (!userData.message && !userData.file.data) return;
-    
-      // Create and display user message
-      const messageContent = `<div class="message-text"></div>
-                            ${userData.file.data ? 
-                              userData.file.mime_type.includes('image') ? 
-                                `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : 
-                                `<div class="pdf-attachment">PDF document attached</div>` : 
-                              ""}`;
-      const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
-      outgoingMessageDiv.querySelector(".message-text").innerText = userData.message || "";
-      chatBody.appendChild(outgoingMessageDiv);
-      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-    
-      // Initialize extractedText variable
-      let extractedText = "";
-    
-      // Check if there's a file attached
-      if (userData.file.data) {
-        if (userData.file.mime_type.includes('image')) {
-          // Extract text from image using Tesseract.js
-          try {
-            const { createWorker } = Tesseract;
-            const worker = await createWorker('eng');
-    
-            // Enable handwriting recognition (if supported)
-            await worker.load();
-            await worker.loadLanguage('eng');
-            await worker.initialize('eng');
-    
-            // Set Tesseract parameters for better handwriting recognition
-            await worker.setParameters({
-              tessedit_pageseg_mode: '6', // Treat the image as a single text line
-              tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', // Optional: Limit characters
-            });
-    
-            const { data: { text } } = await worker.recognize(`data:${userData.file.mime_type};base64,${userData.file.data}`);
-            extractedText = text.trim();
-            console.log("Extracted text from image:", extractedText);
-            await worker.terminate();
-          } catch (error) {
-            console.error("Error extracting text from image:", error);
-            extractedText = "Error extracting text from image";
-          }
-        } else if (userData.file.mime_type.includes('pdf')) {
-          // Extract text from PDF
-          extractedText = await extractTextFromPDF(userData.file.data);
-          console.log("Extracted text from PDF:", extractedText);
-        }
-      }
-    
-      // Combine user message and extracted text (if any)
-      const combinedMessage = userData.message
-        ? extractedText
-          ? `${userData.message}\n\nExtracted text from ${userData.file.mime_type.includes('image') ? 'image' : 'PDF'}:\n${extractedText}`
-          : userData.message
-        : extractedText
-          ? `Extracted text from ${userData.file.mime_type.includes('image') ? 'image' : 'PDF'}:\n${extractedText}`
-          : "";
-    
-      // Store the user's message in Firestore with browser ID
-      await storeChatMessage(combinedMessage, "user", userData.file);
-    
-      // Simulate bot response with thinking indicator
-      setTimeout(async () => {
-        const messageContent = `<div class="bot-avatar-wrapper">
-            <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-            <span class="online-indicator"></span>
-          </div>
-          <div class="message-text">
-            <div class="thinking-indicator">
-              <div class="dot"></div>
-              <div class="dot"></div>
-              <div class="dot"></div>
-            </div>
-          </div>`;
-        const incomingMessageDiv = createMessageElement(messageContent, "bot-message", "thinking");
-        chatBody.appendChild(incomingMessageDiv);
+        const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
+        outgoingMessageDiv.querySelector(".message-text").innerText = userData.message;
+        chatBody.appendChild(outgoingMessageDiv);
         chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
     
-        // Update the bot response generation with the combined message
-        userData.message = combinedMessage;
+        // End timer for creating and displaying user message
+        const createMessageEndTime = performance.now();
+        const createMessageTime = createMessageEndTime - createMessageStartTime;
+        console.log(`Time to create and display user message: ${createMessageTime} milliseconds`);
     
-        const botResponse = await generateBotResponse(incomingMessageDiv);
+        // Start timer for storing user message in Firestore
+        const storeMessageStartTime = performance.now();
     
-        // Store the bot's response in Firestore with browser ID
-        await storeChatMessage(botResponse, "bot");
+        // Store the user's message in Firestore with browser ID
+        await storeChatMessage(userData.message, "user", userData.file);
     
-        // Clear the file data after getting a response
+        // End timer for storing user message in Firestore
+        const storeMessageEndTime = performance.now();
+        const storeMessageTime = storeMessageEndTime - storeMessageStartTime;
+        console.log(`Time to store user message in Firestore: ${storeMessageTime} milliseconds`);
+    
+        // Clear the file data after uploading to prevent it from being used in the next message
         userData.file = { data: null, mime_type: null };
-        fileUploadWrapper.classList.remove("file-uploaded");
-      }, 100);
-    };
-    // 5. Update the file input change event handler to handle PDFs
-    fileInput.addEventListener("change", () => {
-      const file = fileInput.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        fileInput.value = "";
-        
-        // Get or create preview element based on file type
-        let previewElement;
-        if (file.type.includes('image')) {
-          // Handle image files
-          previewElement = fileUploadWrapper.querySelector("img");
-          if (!previewElement) {
-            previewElement = document.createElement("img");
-            previewElement.classList.add("preview-image");
-            fileUploadWrapper.appendChild(previewElement);
-          }
-          previewElement.src = e.target.result;
-        } else if (file.type.includes('pdf')) {
-          // Handle PDF files
-          const existingImg = fileUploadWrapper.querySelector("img");
-          if (existingImg) existingImg.remove();
-          
-          previewElement = fileUploadWrapper.querySelector(".pdf-preview");
-          if (!previewElement) {
-            previewElement = document.createElement("div");
-            previewElement.classList.add("pdf-preview");
-            previewElement.innerHTML = '<span class="material-symbols-rounded">description</span>PDF';
-            fileUploadWrapper.appendChild(previewElement);
-          }
-        }
-        
-        fileUploadWrapper.classList.add("file-uploaded");
-        
-        const base64String = e.target.result.split(",")[1];
-        
-        // Store file data in userData
-        userData.file = {
-          data: base64String,
-          mime_type: file.type,
-        };
-      };
-      
-      reader.readAsDataURL(file);
-    });
     
-      window.sendQuickReply = function (message) {
+        // Simulate bot response with thinking indicator
+        setTimeout(async () => {
+            // Start timer for creating and displaying bot thinking indicator
+            const botThinkingStartTime = performance.now();
+    
+            const messageContent = `<div class="bot-avatar-wrapper">
+                  <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+                  <span class="online-indicator"></span>
+                </div>
+                <div class="message-text">
+                  <div class="thinking-indicator">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                  </div>
+                </div>`;
+    
+            const incomingMessageDiv = createMessageElement(messageContent, "bot-message", "thinking");
+            chatBody.appendChild(incomingMessageDiv);
+            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+    
+            // End timer for creating and displaying bot thinking indicator
+            const botThinkingEndTime = performance.now();
+            const botThinkingTime = botThinkingEndTime - botThinkingStartTime;
+            console.log(`Time to create and display bot thinking indicator: ${botThinkingTime} milliseconds`);
+    
+            // Start timer for generating bot response
+            const botResponseStartTime = performance.now();
+    
+            const botResponse = await generateBotResponse(incomingMessageDiv);
+    
+            // End timer for generating bot response
+            const botResponseEndTime = performance.now();
+            const botResponseTime = botResponseEndTime - botResponseStartTime;
+            console.log(`Time to generate bot response: ${botResponseTime} milliseconds`);
+    
+            // Start timer for storing bot response in Firestore
+            const storeBotResponseStartTime = performance.now();
+    
+            // Store the bot's response in Firestore with browser ID
+            await storeChatMessage(botResponse, "bot");
+    
+            // End timer for storing bot response in Firestore
+            const storeBotResponseEndTime = performance.now();
+            const storeBotResponseTime = storeBotResponseEndTime - storeBotResponseStartTime;
+            console.log(`Time to store bot response in Firestore: ${storeBotResponseTime} milliseconds`);
+    
+            // End overall timer
+            const overallEndTime = performance.now();
+            const overallTime = overallEndTime - overallStartTime;
+            console.log(`Total time for outgoing message handling: ${overallTime} milliseconds`);
+        }, 100);
+    };
+    
+    window.sendQuickReply = function (message) {
         messageInput.value = message; // Set the quick reply message
         document.querySelector('#send-message').click(); // Trigger send message
-      };
-      
-      messageInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault(); // Prevents new line in the input field
-          console.log("Enter key pressed, attempting to send message...");
-          
-          if (messageInput.value.trim() !== "") {
-            handleOutgoingMessage(e); // Call the function to send the message
-          } else {
-            console.log("Message input is empty, not sending.");
-          }
-        }
-      });        
+    };
     
+    messageInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault(); // Prevents new line in the input field
+            console.log("Enter key pressed, attempting to send message...");
+    
+            if (messageInput.value.trim() !== "") {
+                handleOutgoingMessage(e); // Call the function to send the message
+            } else {
+                console.log("Message input is empty, not sending.");
+            }
+        }
+    });     
+      
       // Generate bot response using API
       const uploadImageToFirebase = async (file) => {
         if (!file) return null;
@@ -1071,7 +901,84 @@ body.show-emoji-picker em-emoji-picker {
         }
       };
       
-   
+      const generateBotResponse = async (incomingMessageDiv) => {
+        const messageElement = incomingMessageDiv.querySelector(".message-text");
+        
+        const userMessage = userData.message.toLowerCase();
+  
+        // Show typing effect
+        const typingStart = performance.now();
+        messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+        console.log(`Typing effect time: ${performance.now() - typingStart}ms`);
+      
+        try {
+          // Cache lookup
+          const cacheStart = performance.now();
+          const cacheKey = `${userMessage}_${currentBrowserId}`;
+          const cachedResponse = localStorage.getItem(cacheKey);
+          let botResponseText;
+          console.log(`Cache lookup time: ${performance.now() - cacheStart}ms`);
+      
+          if (cachedResponse) {
+            const cacheAssignStart = performance.now();
+            botResponseText = cachedResponse;
+            console.log(`Cache assignment time: ${performance.now() - cacheAssignStart}ms`);
+          } else {
+            // API fetch
+            const fetchStart = performance.now();
+            const apiResponse = await fetch('https://fastapi-vercel-iota.vercel.app/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: userMessage, browserId: currentBrowserId }),
+            });
+            console.log(`API fetch time: ${performance.now() - fetchStart}ms`);
+      
+            // Response validation and parsing
+            const responseCheckStart = performance.now();
+            if (!apiResponse.ok) throw new Error('Failed to fetch bot response');
+            const data = await apiResponse.json();
+            botResponseText = data.response || "Sorry, I don't understand that yet.";
+            console.log(`Response check and parse time: ${performance.now() - responseCheckStart}ms`);
+      
+            // Cache storage
+            const cacheStoreStart = performance.now();
+            localStorage.setItem(cacheKey, botResponseText);
+            console.log(`Cache store time: ${performance.now() - cacheStoreStart}ms`);
+          }
+      
+          // Regex processing
+          const regexStart = performance.now();
+          botResponseText = botResponseText
+            .replace(/(- Link$|\[Link\]\()/g, (_, match) => match === '- Link' ? '• LINK_PLACEHOLDER' : '')
+            .replace(/https?:\/\/[^\s()]+(?:\([^\)]*\)|[^\s]*)*/g, url => {
+              const cleanUrl = url.endsWith(')') && !url.includes('(') ? url.slice(0, -1) : url;
+              return `<a href="${cleanUrl}" target="_blank" class="bot-link">[Link]</a>`;
+            })
+            .replace(/(\n|^)[\s\u200B\u00A0]*-\s+|\n/g, match => match.includes('\n') ? '<br>' : '$1• ')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
+              const previousText = fullText.substring(0, index);
+              const productName = previousText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
+              return `• <a href="#" class="product-link">View ${productName}</a>`;
+            });
+          console.log(`Regex processing time: ${performance.now() - regexStart}ms`);
+      
+          // DOM update
+          const domStart = performance.now();
+          requestAnimationFrame(() => {
+            messageElement.innerHTML = botResponseText;
+            incomingMessageDiv.classList.remove("thinking");
+            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+            console.log(`DOM update time (including rAF scheduling): ${performance.now() - domStart}ms`);
+          });
+      
+          return botResponseText;
+        } catch (error) {
+          console.error("Error fetching bot response:", error);
+          messageElement.innerText = "Error fetching response";
+          return "Error fetching response";
+        }
+      };
     
     const resetChatHistory = async () => {
         const chatBody = document.querySelector(".chat-body");
