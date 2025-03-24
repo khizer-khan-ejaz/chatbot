@@ -908,11 +908,20 @@ body.show-emoji-picker em-emoji-picker {
         messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
         
         try {
+          // Check if we have a session ID, if not get one
+          if (!window.sessionId) {
+            const sessionResponse = await fetch('https://chatbot-mongo-db.vercel.app/start');
+            if (!sessionResponse.ok) throw new Error('Failed to get session ID');
+            const sessionData = await sessionResponse.json();
+            window.sessionId = sessionData.session_id;
+            console.log("Session started with ID:", window.sessionId);
+          }
+      
           const browserIdString = String(currentBrowserId);
           const cacheKey = `${userMessage}_${browserIdString}`;
           const cachedResponse = localStorage.getItem(cacheKey);
           let botResponseText;
-      
+          let str="string";
           if (cachedResponse) {
             botResponseText = cachedResponse;
           } else {
@@ -920,14 +929,14 @@ body.show-emoji-picker em-emoji-picker {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
-                query: userMessage, 
-                session_id: browserIdString 
+                query: userMessage,
               }),
+              
             });
-      
+      console.log(apiResponse)
             if (!apiResponse.ok) throw new Error('Failed to fetch bot response');
             const data = await apiResponse.json();
-            botResponseText = data.response || "Sorry, I don’t understand that yet.";
+            botResponseText = data.response || "Sorry, I don't understand that yet.";
             localStorage.setItem(cacheKey, botResponseText);
           }
       
@@ -949,11 +958,28 @@ body.show-emoji-picker em-emoji-picker {
       
           return botResponseText;
         } catch (error) {
-          console.error("Error fetching bot response:", error);
-          messageElement.innerText = "Error fetching response";
-          return "Error fetching response";
+          console.error("Error in chat process:", error);
+          messageElement.innerText = "Error processing your request";
+          return "Error processing your request";
         }
       };
+      
+      // Initialize chat session on page load
+      const initChatSession = async () => {
+        try {
+          const sessionResponse = await fetch('https://chatbot-mongo-db.vercel.app/start');
+          console.log(sessionResponse);
+          if (!sessionResponse.ok) throw new Error('Failed to start chat session');
+          const sessionData = await sessionResponse.json();
+          window.sessionId = sessionData.session_id;
+          console.log("Chat session initialized with ID:", window.sessionId);
+        } catch (error) {
+          console.error("Error initializing chat session:", error);
+        }
+      };
+      
+      // Call this when your page loads
+      document.addEventListener('DOMContentLoaded', initChatSession);
     
     const resetChatHistory = async () => {
         const chatBody = document.querySelector(".chat-body");

@@ -3,41 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Text to Speech Example</title>
+  <title>Vosk Speech Recognition</title>
+  <script type="application/javascript" src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.5/dist/vosk.js"></script>
 </head>
 <body>
+  <script>
+    async function init() {
+      try {
+        // Load the Vosk model
+        const model = await Vosk.createModel('https://your-server.com/path/to/model.tar.gz');
+        console.log('Model loaded:', model);
 
-<h2>Text to Speech Example</h2>
-<input type="text" id="text-input" placeholder="Enter text to speak" />
-<button id="speak-btn">Speak</button>
+        // Create a recognizer
+        const recognizer = new model.KaldiRecognizer();
+        recognizer.on("result", (message) => {
+            console.log(`Result: ${message.result.text}`);
+        });
+        recognizer.on("partialresult", (message) => {
+            console.log(`Partial result: ${message.result.partial}`);
+        });
 
-<script>
-  // Check if the browser supports SpeechSynthesis
-  if ('speechSynthesis' in window) {
-    const speakBtn = document.getElementById('speak-btn');
-    const textInput = document.getElementById('text-input');
+        // Request microphone access
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                channelCount: 1,
+                sampleRate: 16000
+            },
+        });
+        console.log('Media stream obtained:', mediaStream);
 
-    speakBtn.addEventListener('click', () => {
-      const textToSpeak = textInput.value.trim();
-      
-      if (textToSpeak) {
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        
-        utterance.lang = 'en-US'; 
-         utterance.volume = 1; 
-        utterance.rate = 1; 
-        utterance.pitch = 1; // Pitch: 0 to 2
-        
-        // Speak the text
-        window.speechSynthesis.speak(utterance);
-      } else {
-        alert("Please enter some text to speak!");
+        // Set up audio processing
+        const audioContext = new AudioContext();
+        const recognizerNode = audioContext.createScriptProcessor(4096, 1, 1);
+        recognizerNode.onaudioprocess = (event) => {
+            try {
+                recognizer.acceptWaveform(event.inputBuffer);
+            } catch (error) {
+                console.error('acceptWaveform failed', error);
+            }
+        };
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        source.connect(recognizerNode);
+      } catch (error) {
+        console.error('Initialization failed', error);
+        alert('An error occurred. Please check the console for details.');
       }
-    });
-  } else {
-    alert("Your browser does not support SpeechSynthesis.");
-  }
-</script>
+    }
 
+    window.onload = init;
+
+    const showWelcomeMessage2 = (chatBody) => {
+      const welcomeMessage = `
+        <div class="bot-avatar-wrapper">
+          <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+          <span class="online-indicator"></span>
+        </div>
+       <div class="message-content">
+    <h3 class="welcome-heading">Welcome to Health Assistant</h3>
+    <p class="welcome-text">I'm here to provide personalized health guidance. Would you like to upload your health reports for more accurate recommendations?</p>
+    
+    <div class="welcome-options">
+      <div class="file-upload-wrapper">
+        <input type="file" accept="image/*,application/pdf" id="welcome-file-input" hidden />
+        <button type="button" id="welcome-file-upload-btn" class="primary-button">
+          <i class="upload-icon"></i> Upload 
+        </button>
+      </div>
+      
+      <div class="quick-replies">
+        <button class="secondary-button" onclick="sendQuickReply('Continue ')">Continue </button>
+        
+      </div>
+    </div>
+  </div>`;
+  const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
+        chatBody.appendChild(welcomeMessageDiv);
+
+        const fileInput = welcomeMessageDiv.querySelector("#welcome-file-input");
+        const fileUploadBtn = welcomeMessageDiv.querySelector("#welcome-file-upload-btn");
+
+        fileUploadBtn.addEventListener("click", () => fileInput.click());
+        
+        fileInput.addEventListener("change", () => {
+          const file = fileInput.files[0];
+          if (!file) return;
+
+          userData.file = file;
+
+          const fileConfirmation = `
+            <div class="bot-avatar-wrapper">
+              <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+              <span class="online-indicator"></span>
+            </div>
+            <div class="message-text">
+              File "${file.name}" uploaded successfully. Please tell me about your health concern or type "Continue" to proceed.
+            </div>`;
+          const confirmationDiv = createMessageElement(fileConfirmation, "bot-message");
+          chatBody.appendChild(confirmationDiv);
+          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+          fileInput.value = "";
+        });
+      };
+  </script>
 </body>
 </html>

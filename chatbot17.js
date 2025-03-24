@@ -904,72 +904,51 @@ body.show-emoji-picker em-emoji-picker {
       const generateBotResponse = async (incomingMessageDiv) => {
         const messageElement = incomingMessageDiv.querySelector(".message-text");
         
-        const userMessage = userData.message.toLowerCase();
-  
-        // Show typing effect
-        const typingStart = performance.now();
+        const userMessage = "i had dialysis last month; do you have any specific recipes or products for me?"; // From userData.message.toLowerCase()
+        
+        // Typing effect
         messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
-        console.log(`Typing effect time: ${performance.now() - typingStart}ms`);
-      
+        
         try {
-          // Cache lookup
-          const cacheStart = performance.now();
-          const cacheKey = `${userMessage}_${currentBrowserId}`;
+          const browserIdString = String(currentBrowserId); // e.g., "browser_1677654321_abc123xyz"
+          const cacheKey = `${userMessage}_${browserIdString}`;
           const cachedResponse = localStorage.getItem(cacheKey);
           let botResponseText;
-          console.log(`Cache lookup time: ${performance.now() - cacheStart}ms`);
       
           if (cachedResponse) {
-            const cacheAssignStart = performance.now();
             botResponseText = cachedResponse;
-            console.log(`Cache assignment time: ${performance.now() - cacheAssignStart}ms`);
           } else {
-            // API fetch
-            const fetchStart = performance.now();
             const apiResponse = await fetch('https://chatbot-mongo-db.vercel.app/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message: userMessage, browserId: currentBrowserId }),
+              body: JSON.stringify({ 
+                query: userMessage, 
+                session_id: browserIdString 
+              }),
             });
-            console.log(`API fetch time: ${performance.now() - fetchStart}ms`);
       
-            // Response validation and parsing
-            const responseCheckStart = performance.now();
             if (!apiResponse.ok) throw new Error('Failed to fetch bot response');
             const data = await apiResponse.json();
             botResponseText = data.response || "Sorry, I don't understand that yet.";
-            console.log(`Response check and parse time: ${performance.now() - responseCheckStart}ms`);
-      
-            // Cache storage
-            const cacheStoreStart = performance.now();
             localStorage.setItem(cacheKey, botResponseText);
-            console.log(`Cache store time: ${performance.now() - cacheStoreStart}ms`);
           }
       
-          // Regex processing
-          const regexStart = performance.now();
+          // Regex processing (example response: "Try our **kidney-friendly recipes** - Link")
           botResponseText = botResponseText
             .replace(/(- Link$|\[Link\]\()/g, (_, match) => match === '- Link' ? '• LINK_PLACEHOLDER' : '')
-            .replace(/https?:\/\/[^\s()]+(?:\([^\)]*\)|[^\s]*)*/g, url => {
-              const cleanUrl = url.endsWith(')') && !url.includes('(') ? url.slice(0, -1) : url;
-              return `<a href="${cleanUrl}" target="_blank" class="bot-link">[Link]</a>`;
-            })
+            .replace(/https?:\/\/[^\s()]+(?:\([^\)]*\)|[^\s]*)*/g, url => `<a href="${url}" target="_blank" class="bot-link">[Link]</a>`)
             .replace(/(\n|^)[\s\u200B\u00A0]*-\s+|\n/g, match => match.includes('\n') ? '<br>' : '$1• ')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
-              const previousText = fullText.substring(0, index);
-              const productName = previousText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
+              const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
               return `• <a href="#" class="product-link">View ${productName}</a>`;
             });
-          console.log(`Regex processing time: ${performance.now() - regexStart}ms`);
       
           // DOM update
-          const domStart = performance.now();
           requestAnimationFrame(() => {
-            messageElement.innerHTML = botResponseText;
+            messageElement.innerHTML = botResponseText; // e.g., "Try our <strong>kidney-friendly recipes</strong> • <a href='#' class='product-link'>View kidney-friendly recipes</a>"
             incomingMessageDiv.classList.remove("thinking");
             chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-            console.log(`DOM update time (including rAF scheduling): ${performance.now() - domStart}ms`);
           });
       
           return botResponseText;

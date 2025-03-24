@@ -61,11 +61,11 @@
         <div class="chatbot-popup">
           <div class="chat-header">
             <div class="header-info">
-              <img class="chatbot-logo" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
+              <img class="chatbot-logo" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
               <h2 class="logo-text">KhadarGroups</h2>
             </div>
           <div> 
-            <button id="resetChatHistory" class="material-symbols-rounded">refresh</button>
+             <button id="resetChatHistory" class="material-symbols-rounded">delete</button>
           <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
           
           </div>
@@ -74,7 +74,7 @@
           <div class="chat-body" id="chat-body">
             <div class="message bot-message">
               <div class="bot-avatar-wrapper">
-                <img class="bot-avatar" src="https://khadargroups.com/storage/fav.png" alt="Chatbot Logo" width="50" height="50">
+                <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
                 <span class="online-indicator"></span>
               </div>
               <div class="message-text">Hey there <br /> How can I help you today?</div>
@@ -926,7 +926,7 @@
             } else {
               // API fetch
               const fetchStart = performance.now();
-              const apiResponse = await fetch('https://fastapi-vercel-iota.vercel.app/chat', {
+              const apiResponse = await fetch('https://chatbot-mongo-db.vercel.app/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMessage, browserId: currentBrowserId }),

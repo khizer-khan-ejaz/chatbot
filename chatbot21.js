@@ -53,49 +53,72 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     // Get the collection reference
 
     const chatbotHTML = `
-      <button id="chatbot-toggler">
-        <span class="material-symbols-rounded">mode_comment</span>
-        <span class="material-symbols-rounded">close</span>
-      </button>
-
-      <div class="chatbot-popup">
+    <button id="chatbot-toggler">
+      <span class="material-symbols-rounded">mode_comment</span>
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  
+    <div class="chatbot-popup">
+      <!-- User Info Form -->
+      <div class="user-info-form" id="user-info-form">
+        <div class="form-header">
+          <h2>Welcome to KhadarGroups</h2>
+          <p>Please provide your details to start chatting</p>
+        </div>
+        <form id="user-info-submit" class="info-form">
+          <div class="form-field">
+       
+            <input type="text" id="user-name" placeholder="Enter your name" required />
+          </div>
+          <div class="form-field">
+                   <input type="tel" id="user-phone" placeholder="Enter your phone number" pattern="[0-9]{10}" required />
+          </div>
+          <div class="form-field">
+       
+            <input type="number" id="user-age" placeholder="Enter your age" min="1" max="120" required />
+          </div>
+          <button type="submit" class="submit-btn">Start Chat</button>
+        </form>
+      </div>
+  
+      <!-- Chat Interface -->
+      <div class="chat-interface" id="chat-interface" style="display: none;">
         <div class="chat-header">
           <div class="header-info">
             <img class="chatbot-logo" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
             <h2 class="logo-text">KhadarGroups</h2>
           </div>
-        <div> 
-           <button id="resetChatHistory" class="material-symbols-rounded">delete</button>
-        <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
-        
-        </div>
+          <div> 
+            <button id="resetChatHistory" class="material-symbols-rounded">delete</button>
+            <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
           </div>
-
+        </div>
+  
         <div class="chat-body" id="chat-body">
           <div class="message bot-message">
             <div class="bot-avatar-wrapper">
               <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
               <span class="online-indicator"></span>
             </div>
-            <div class="message-text">Hey there <br /> How can I help you today?</div>
+            <div class="message-text">Hey there <br /> Tell me about your health concern! Would you like to upload your health reports for better recommendations or would you like to continue without health reports? </div>
             <div class="message-time" id="bot-message-time"></div>
           </div>
-
-            <!-- Quick Reply Buttons -->
-            <div class="quick-replies">
-              <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
-              <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
-              <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
-            </div>
+  
+          <!-- Quick Reply Buttons -->
+          <div class="quick-replies">
+            <button class="quick-reply" onclick="sendQuickReply('What are your services?')">What are your services?</button>
+            <button class="quick-reply" onclick="sendQuickReply('Tell me a joke!')">Tell me a joke!</button>
+            <button class="quick-reply" onclick="sendQuickReply('How can I contact support?')">Contact Support</button>
           </div>
-
+        </div>
+  
         <div class="chat-footer">
           <form action="#" class="chat-form" id="chat-form">
             <textarea placeholder="Message..." class="message-input" id="message-input" required></textarea>
             <div class="chat-controls">
               <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
               <div class="file-upload-wrapper">
-                <input type="file" accept="image/*" id="file-input" hidden />
+                <input type="file" action="https://chatbot-mongo-db.vercel.app/chat"  accept="image/*,application/pdf" id="file-input" hidden />
                 <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
                 <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
               </div>
@@ -104,7 +127,8 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
           </form>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
     // Add some basic styles for the chatbot (this can be expanded as needed)
     const style = document.createElement('style');
@@ -145,7 +169,74 @@ margin-left:38px;
 .quick-reply:hover {
   background-color: rgb(236, 245, 255);
 }
+/* Add these styles to your existing style block */
+.user-info-form {
+  padding: 20px;
+  background: #ececec;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
+.form-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-header h2 {
+  color: #ee5d27;
+  font-size: 1.5rem;
+}
+
+.form-header p {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.info-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.form-field input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.form-field input:focus {
+  border-color: #ee5d27;
+}
+
+.submit-btn {
+  background: #ee5d27;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s ease;
+}
+
+.submit-btn:hover {
+  background: #d54b1f;
+}
 .message-time {
   font-size: 12px;
   color: gray;
@@ -631,7 +722,22 @@ body.show-emoji-picker em-emoji-picker {
   .chat-form .file-upload-wrapper.file-uploaded #file-cancel {
     opacity: 0;
   }
-}`
+}
+.file-icon {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 5px;
+        color: #666;
+    }
+    .file-icon img {
+        vertical-align: middle;
+    }
+    .file-icon span {
+        font-size: 0.9em;
+    }  
+
+`
     document.head.appendChild(style);
 
 
@@ -657,7 +763,7 @@ body.show-emoji-picker em-emoji-picker {
 
       const userData = {
         message: null,
-        file: { data: null, mime_type: null },
+        file: null, // Changed from { data: null, mime_type: null } to store File object or null
       };
 
       const createMessageElement = (content, ...classes) => {
@@ -676,7 +782,7 @@ body.show-emoji-picker em-emoji-picker {
             sender: sender,
             timestamp: new Date(),
             browserId: currentBrowserId, // Add browser ID to each message
-            file: file ? { data: file.data, mime_type: file.mime_type } : null,
+            
           });
         } catch (error) {
           console.error("Error storing chat message:", error);
@@ -765,105 +871,80 @@ body.show-emoji-picker em-emoji-picker {
           console.error("Error loading chat history:", error);
         }
       };
+      // Function to store user info in Firestore
+      
+const storeUserInfo = async (name, phone, age) => {
+  try {
+    const userRef = collection(db, "users");
+    await addDoc(userRef, {
+      name: name,
+      phone: phone,
+      age: age,
+      browserId: currentBrowserId,
+      timestamp: new Date(),
+    });
+    console.log("User info stored successfully");
+  } catch (error) {
+    console.error("Error storing user info:", error);
+  }
+};
+
+// Check if user info is already submitted
+const checkUserInfoSubmitted = async () => {
+  const userRef = collection(db, "users");
+  const q = query(userRef, where("browserId", "==", currentBrowserId));
+  const querySnapshot = await getDocs(q);
+  return !querySnapshot.empty;
+};
+
+// Handle form submission
+const handleUserInfoSubmit = async (e) => {
+  e.preventDefault();
+  const name = document.getElementById("user-name").value.trim();
+  const phone = document.getElementById("user-phone").value.trim();
+  const age = document.getElementById("user-age").value.trim();
+
+  if (name && phone && age) {
+    await storeUserInfo(name, phone, age);
+    document.getElementById("user-info-form").style.display = "none";
+    document.getElementById("chat-interface").style.display = "block";
+    loadChatHistory(); // Load chat history after form submission
+  }
+};
+
+// Modify the chatbot toggler logic
+
+// Close chatbot button
+
+// Add event listener for form submission
+document.getElementById("user-info-submit").addEventListener("submit", handleUserInfoSubmit);
       // Handle outgoing user messages
-      const handleOutgoingMessage = async (e) => {
-        e.preventDefault();
+      
+    // Define uploadFileToServer function
+  
     
-        // Start the overall timer
-        const overallStartTime = performance.now();
+    // File input event listener (unchanged from last revision)
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          fileInput.value = "";
+          let imgElement = fileUploadWrapper.querySelector("img");
+          if (!imgElement) {
+            imgElement = document.createElement("img");
+            fileUploadWrapper.appendChild(imgElement);
+          }
+          imgElement.src = e.target.result; // Base64 for preview
+          fileUploadWrapper.classList.add("file-uploaded");
+        };
+        reader.readAsDataURL(file);
+        userData.file = file; // Stores the raw File object
+      });
     
-        userData.message = messageInput.value.trim();
-        messageInput.value = "";
-        messageInput.dispatchEvent(new Event("input"));
-        fileUploadWrapper.classList.remove("file-uploaded");
-    
-        if (!userData.message && !userData.file.data) return; // Ensure we send something
-    
-        // Start timer for creating and displaying user message
-        const createMessageStartTime = performance.now();
-    
-        // Create and display user message
-        const messageContent = `<div class="message-text"></div>
-                              ${userData.file.data ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : ""}`;
-    
-        const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
-        outgoingMessageDiv.querySelector(".message-text").innerText = userData.message;
-        chatBody.appendChild(outgoingMessageDiv);
-        chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-    
-        // End timer for creating and displaying user message
-        const createMessageEndTime = performance.now();
-        const createMessageTime = createMessageEndTime - createMessageStartTime;
-        console.log(`Time to create and display user message: ${createMessageTime} milliseconds`);
-    
-        // Start timer for storing user message in Firestore
-        const storeMessageStartTime = performance.now();
-    
-        // Store the user's message in Firestore with browser ID
-        await storeChatMessage(userData.message, "user", userData.file);
-    
-        // End timer for storing user message in Firestore
-        const storeMessageEndTime = performance.now();
-        const storeMessageTime = storeMessageEndTime - storeMessageStartTime;
-        console.log(`Time to store user message in Firestore: ${storeMessageTime} milliseconds`);
-    
-        // Clear the file data after uploading to prevent it from being used in the next message
-        userData.file = { data: null, mime_type: null };
-    
-        // Simulate bot response with thinking indicator
-        setTimeout(async () => {
-            // Start timer for creating and displaying bot thinking indicator
-            const botThinkingStartTime = performance.now();
-    
-            const messageContent = `<div class="bot-avatar-wrapper">
-                  <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-                  <span class="online-indicator"></span>
-                </div>
-                <div class="message-text">
-                  <div class="thinking-indicator">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                  </div>
-                </div>`;
-    
-            const incomingMessageDiv = createMessageElement(messageContent, "bot-message", "thinking");
-            chatBody.appendChild(incomingMessageDiv);
-            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-    
-            // End timer for creating and displaying bot thinking indicator
-            const botThinkingEndTime = performance.now();
-            const botThinkingTime = botThinkingEndTime - botThinkingStartTime;
-            console.log(`Time to create and display bot thinking indicator: ${botThinkingTime} milliseconds`);
-    
-            // Start timer for generating bot response
-            const botResponseStartTime = performance.now();
-    
-            const botResponse = await generateBotResponse(incomingMessageDiv);
-    
-            // End timer for generating bot response
-            const botResponseEndTime = performance.now();
-            const botResponseTime = botResponseEndTime - botResponseStartTime;
-            console.log(`Time to generate bot response: ${botResponseTime} milliseconds`);
-    
-            // Start timer for storing bot response in Firestore
-            const storeBotResponseStartTime = performance.now();
-    
-            // Store the bot's response in Firestore with browser ID
-            await storeChatMessage(botResponse, "bot");
-    
-            // End timer for storing bot response in Firestore
-            const storeBotResponseEndTime = performance.now();
-            const storeBotResponseTime = storeBotResponseEndTime - storeBotResponseStartTime;
-            console.log(`Time to store bot response in Firestore: ${storeBotResponseTime} milliseconds`);
-    
-            // End overall timer
-            const overallEndTime = performance.now();
-            const overallTime = overallEndTime - overallStartTime;
-            console.log(`Total time for outgoing message handling: ${overallTime} milliseconds`);
-        }, 100);
-    };
-    
+
+// Handle outgoing user messages
+
     window.sendQuickReply = function (message) {
         messageInput.value = message; // Set the quick reply message
         document.querySelector('#send-message').click(); // Trigger send message
@@ -883,82 +964,323 @@ body.show-emoji-picker em-emoji-picker {
     });     
       
       // Generate bot response using API
-      const uploadImageToFirebase = async (file) => {
-        if (!file) return null;
+     
+      const showWelcomeMessage2 = (chatBody) => {
+        const welcomeMessage = `
+          <div class="bot-avatar-wrapper">
+            <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+            <span class="online-indicator"></span>
+          </div>
+         <div class="message-content">
+      <h3 class="welcome-heading">Welcome to Health Assistant</h3>
+      <p class="welcome-text">I'm here to provide personalized health guidance. Would you like to upload your health reports for more accurate recommendations?</p>
       
-        const storageRef = ref(storage, `chat_images/${currentBrowserId}/${Date.now()}_${file.name}`);
-        try {
-          // Upload file to Firebase Storage
-          const snapshot = await uploadBytes(storageRef, file);
-          
-          // Get the file URL after upload
-          const downloadURL = await getDownloadURL(snapshot.ref);
-          
-          return downloadURL;
-        } catch (error) {
-          console.error("Error uploading file:", error);
-          return null;
-        }
-      };
-      
-      const generateBotResponse = async (incomingMessageDiv) => {
-        const messageElement = incomingMessageDiv.querySelector(".message-text");
+      <div class="welcome-options">
+        <div class="file-upload-wrapper">
+          <input type="file" accept="image/*,application/pdf" id="welcome-file-input" hidden />
+          <button type="button" id="welcome-file-upload-btn" class="primary-button">
+            <i class="upload-icon"></i> Upload 
+          </button>
+        </div>
         
-        const userMessage = userData.message.toLowerCase(); // Use dynamic user input
-        messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
-        
-        try {
-          const browserIdString = String(currentBrowserId);
-          const cacheKey = `${userMessage}_${browserIdString}`;
-          const cachedResponse = localStorage.getItem(cacheKey);
-          let botResponseText;
-      
-          if (cachedResponse) {
-            botResponseText = cachedResponse;
-          } else {
-            const apiResponse = await fetch('https://chatbot-mongo-db.vercel.app/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                query: userMessage, 
-                session_id: browserIdString 
-              }),
-            });
-      
-            if (!apiResponse.ok) throw new Error('Failed to fetch bot response');
-            const data = await apiResponse.json();
-            botResponseText = data.response || "Sorry, I don’t understand that yet.";
-            localStorage.setItem(cacheKey, botResponseText);
-          }
-      
-          botResponseText = botResponseText
-    .replace(/(- Link$|\[Link\]\()/g, '') // Remove "- Link" and "[Link]("
-    .replace(/https?:\/\/[^\s\]]+/g, url => 
-        `<a href="${url}" target="_blank" class="bot-link">[Link]</a>`) // Fix URL formatting
-    .replace(/(\n|^)[\s\u200B\u00A0]*-\s+/g, '$1• ') // Convert "- " into bullet points
-    .replace(/\n/g, '<br>') // Convert new lines to <br>
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
-    .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
-        const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
-        return `• <a href="#" class="product-link">View ${productName}</a>`;
-    })
-    .replace(/[>\])]+botresponse/g, ''); // Remove unwanted ">)]>botresponse"
- // Remove unwanted ">)]>botresponse"
-
-      
-          requestAnimationFrame(() => {
-            messageElement.innerHTML = botResponseText;
-            incomingMessageDiv.classList.remove("thinking");
+        <div class="quick-replies">
+          <button class="secondary-button" onclick="sendQuickReply('Continue ')">Continue </button>
+          
+        </div>
+      </div>
+    </div>`;
+    const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
+          chatBody.appendChild(welcomeMessageDiv);
+  
+          const fileInput = welcomeMessageDiv.querySelector("#welcome-file-input");
+          const fileUploadBtn = welcomeMessageDiv.querySelector("#welcome-file-upload-btn");
+  
+          fileUploadBtn.addEventListener("click", () => fileInput.click());
+          
+          fileInput.addEventListener("change", () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+  
+            userData.file = file;
+  
+            const fileConfirmation = `
+              <div class="bot-avatar-wrapper">
+                <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+                <span class="online-indicator"></span>
+              </div>
+              <div class="message-text">
+                File "${file.name}" uploaded successfully. Please tell me about your health concern or type "Continue" to proceed.
+              </div>`;
+            const confirmationDiv = createMessageElement(fileConfirmation, "bot-message");
+            chatBody.appendChild(confirmationDiv);
             chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+  
+            fileInput.value = "";
           });
-      
-          return botResponseText;
-        } catch (error) {
-          console.error("Error fetching bot response:", error);
-          messageElement.innerText = "Error fetching response";
-          return "Error fetching response";
+        };
+      // Add a message counter variable at the beginning of your script
+let messageCount = 0;
+/**
+ * Handles sending a message
+ */
+const handleOutgoingMessage = async (e) => {
+  e.preventDefault();
+  userData.message = messageInput.value.trim();
+  messageInput.value = "";
+  messageInput.dispatchEvent(new Event("input"));
+  fileUploadWrapper.classList.remove("file-uploaded");
+
+  // Add patient icon with inline styling
+  let messageContent = `
+    <div class="patient-avatar-wrapper" style="display: inline-flex; align-items: center;">
+      <img class="patient-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Patient Avatar" width="40" height="40" style="display: inline-block; vertical-align: middle;">
+      <span class="online-indicator" style="display: inline-block; margin-left: -15px; vertical-align: bottom;"></span>
+    </div>
+    <div class="message-text">${userData.message || "[Empty message]"}</div>`;
+  
+  if (userData.file) {
+    messageContent += `<div class="file-icon">
+      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
+      <span>File attached</span>
+    </div>`;
+  }
+
+  const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
+  chatBody.appendChild(outgoingMessageDiv);
+  chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+  await storeChatMessage(userData.message || "[Empty message]", "user");
+  
+  // Increment message counter
+  messageCount++;
+
+  setTimeout(async () => {
+    // Check if this is the first message from the user
+    if (messageCount === 1) {
+      // Skip API call entirely for the first message
+      // Instead, immediately show the welcome message 2
+      setTimeout(() => {
+        showWelcomeMessage2(chatBody);
+      }, 1000); // Wait a second to show the welcome message
+    } else {
+      // Normal processing for subsequent messages
+      const thinkingContent = `<div class="bot-avatar-wrapper">
+        <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+        <span class="online-indicator"></span>
+      </div>
+      <div class="message-text">
+        <div class="thinking-indicator">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>`;
+      const incomingMessageDiv = createMessageElement(thinkingContent, "bot-message", "thinking");
+      chatBody.appendChild(incomingMessageDiv);
+      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+      const fileToSend = userData.file;
+      const botResponse = await generateBotResponse(incomingMessageDiv, null, fileToSend);
+
+      let botMessageContent = `<div class="bot-avatar-wrapper">
+        <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+        <span class="online-indicator"></span>
+      </div>
+      <div class="message-text">${botResponse}</div>`;
+      if (fileToSend) {
+        botMessageContent += `<div class="file-icon">
+          <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
+          <span>Pdf </span>
+        </div>`;
+      }
+      incomingMessageDiv.innerHTML = botMessageContent;
+      incomingMessageDiv.classList.remove("thinking");
+
+      await storeChatMessage(botResponse, "bot");
+    }
+    
+    userData.file = null;
+  }, 100);
+};
+  
+  const generateBotResponse = async (incomingMessageDiv, query = null, file = null, session_id,fileToSend) => {
+    const messageElement = incomingMessageDiv.querySelector(".message-text");
+    const userMessage = query || userData.message || "";
+    messageElement.innerHTML = "";
+   
+    console.log(file)
+  
+    try {
+      console.log("Starting bot response generation");
+  
+      const browserIdString = session_id || String(currentBrowserId);
+      const cacheKey = `${userMessage}_${file ? file.name : "no-file"}_${browserIdString}`;
+  
+      const cachedResponse = localStorage.getItem(cacheKey);
+      if (cachedResponse) {
+        console.log("Using cached response");
+        displayResponse(cachedResponse);
+        return cachedResponse;
+      }
+  
+      // Build FormData object
+      const formData = new FormData();
+      formData.append("query", userMessage);
+      formData.append("session_id", browserIdString);
+  
+      // Append file if it exists and is a File object
+      if (file) {
+        if (file instanceof File) {
+          console.log(`Appending file: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+          formData.append("file", file, file.name);
+        } 
+        else if (file.data && file.mime_type) {
+          // Convert base64 data to a Blob then to a File
+          const binaryData = atob(file.data);
+          const bytes = new Uint8Array(binaryData.length);
+          for (let i = 0; i < binaryData.length; i++) {
+            bytes[i] = binaryData.charCodeAt(i);
+          }
+          
+          const blob = new Blob([bytes], { type: file.mime_type });
+          const fileFromBlob = new File([blob], "document.pdf", { type: file.mime_type });
+          
+          console.log(`Appending converted file: type: ${fileFromBlob.type}, size: ${fileFromBlob.size} bytes`);
+          formData.append("file", fileFromBlob);
+        } else {
+          console.log("File object has invalid format:", file);
         }
-      };
+      } else {
+        console.log("No file to append");
+      }
+  
+      // Log FormData contents for debugging
+      console.log("Sending FormData payload:", Object.fromEntries(formData.entries()));
+  
+      // Send request to API
+      const apiResponse = await fetch("https://chatbot-mongo-db.vercel.app/chat", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!apiResponse.ok) {
+        let errorMessage = apiResponse.statusText || "Unknown error";
+        try {
+          const errorData = await apiResponse.json();
+          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+        } catch (e) {
+          console.warn("No JSON error response available");
+        }
+        throw new Error(`API Error (${apiResponse.status}): ${errorMessage}`);
+      }
+  
+      const data = await apiResponse.json();
+      console.log("Received API response:", data);
+  
+      let botResponseText = data.message || "Sorry, I don't understand that yet.";
+      if (file && data.url) {
+        botResponseText += ` File uploaded: ${data.url}`;
+      }
+  
+      localStorage.setItem(cacheKey, botResponseText);
+      displayResponse(botResponseText);
+      return botResponseText;
+  
+    } catch (error) {
+      console.error("Error in generateBotResponse:", error);
+      const errorMessage = `Sorry, there was an error: ${error.message}`;
+      displayResponse(errorMessage);
+      return errorMessage;
+    }
+  
+    function displayResponse(text) {
+      const formattedResponse = `
+        <div class="bot-response-box">
+          ${text
+            .replace(/(\n|^)[\s\u200B\u00A0]*-\s+/g, "$1• ")
+            .replace(/\n/g, "<br>")
+            .replace(/https?:\/\/[^\s]+/g, (url) => `<a href="${url}" target="_blank">[Link]</a>`)
+          }
+        </div>
+      `;
+      requestAnimationFrame(() => {
+        messageElement.innerHTML = formattedResponse;
+        incomingMessageDiv.classList.remove("thinking");
+        chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+      });
+    }
+  };
+/**
+ * Handles file upload
+ */
+const handleFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  userData.file = file;
+  
+  // Update UI to show file has been uploaded
+  fileUploadWrapper.classList.add("file-uploaded");
+  const fileNameElement = document.createElement("div");
+  fileNameElement.className = "file-name";
+  fileNameElement.textContent = file.name;
+  
+  // Clear any previous file name element
+  const existingFileName = fileUploadWrapper.querySelector(".file-name");
+  if (existingFileName) {
+    fileUploadWrapper.removeChild(existingFileName);
+  }
+  
+  fileUploadWrapper.appendChild(fileNameElement);
+  
+  // Add remove button
+  const removeButton = document.createElement("button");
+  removeButton.className = "remove-file";
+  removeButton.textContent = "×";
+  removeButton.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    clearFileUpload();
+  };
+  fileNameElement.appendChild(removeButton);
+};
+
+/**
+ * Clears the file upload
+ */
+const clearFileUpload = () => {
+  userData.file = null;
+  fileInput.value = "";
+  fileUploadWrapper.classList.remove("file-uploaded");
+  const fileNameElement = fileUploadWrapper.querySelector(".file-name");
+  if (fileNameElement) {
+    fileUploadWrapper.removeChild(fileNameElement);
+  }
+};
+
+/**
+ * Initializes the chat application
+ */
+const initChat = () => {
+  // Set up event listeners
+  fileInput.addEventListener("change", handleFileUpload);
+  sendButton.addEventListener("click", handleOutgoingMessage);
+  messageInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      handleOutgoingMessage(e);
+    }
+  });
+  
+  // Load chat history
+  loadChatHistory();
+  
+  console.log("Chat initialized");
+};
+
+/**
+ * Loads chat history from storage
+ */
+
     
     const resetChatHistory = async () => {
         const chatBody = document.querySelector(".chat-body");
@@ -1038,21 +1360,20 @@ body.show-emoji-picker em-emoji-picker {
       sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
       document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
       closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
-      chatbotToggler.addEventListener("click", () => {
+      chatbotToggler.addEventListener("click", async () => {
         document.body.classList.toggle("show-chatbot");
-        
-        // Load chat history when the chatbot is opened, but check the skip flag
+        const userInfoForm = document.getElementById("user-info-form");
+        const chatInterface = document.getElementById("chat-interface");
+      
         if (document.body.classList.contains("show-chatbot")) {
-          // Check if we should skip loading history
-          const skipLoading = localStorage.getItem('skipLoadingChatHistory') === 'true';
-          
-          if (skipLoading) {
-            // Clear the flag so we'll load history next time
-            localStorage.removeItem('skipLoadingChatHistory');
-            console.log("Skipping chat history load as requested by reset function");
+          const isRegistered = await checkUserInfoSubmitted();
+          if (isRegistered) {
+            userInfoForm.style.display = "none";
+            chatInterface.style.display = "block";
+            loadChatHistory(); // Show chat interface if registered
           } else {
-            // Load chat history normally
-            loadChatHistory();
+            userInfoForm.style.display = "block";
+            chatInterface.style.display = "none"; // Show form if not registered
           }
         }
       });

@@ -942,6 +942,17 @@ body.show-emoji-picker em-emoji-picker {
         const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
         return `• <a href="#" class="product-link">View ${productName}</a>`;
     })
+    .replace(/[>\])]+botresponse/g, ''); botResponseText = botResponseText
+    .replace(/(- Link$|\[Link\]\()/g, '') // Remove "- Link" and "[Link]("
+    .replace(/https?:\/\/[^\s\]]+/g, url => 
+        `<a href="${url}" target="_blank" class="bot-link">[Link]</a>`) // Fix URL formatting
+    .replace(/(\n|^)[\s\u200B\u00A0]*-\s+/g, '$1• ') // Convert "- " into bullet points
+    .replace(/\n/g, '<br>') // Convert new lines to <br>
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
+    .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
+        const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
+        return `• <a href="#" class="product-link">View ${productName}</a>`;
+    })
     .replace(/[>\])]+botresponse/g, ''); // Remove unwanted ">)]>botresponse"
  // Remove unwanted ">)]>botresponse"
 

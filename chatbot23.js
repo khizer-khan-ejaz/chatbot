@@ -423,20 +423,31 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       
           // Show welcome message and quick replies if it's the first conversation or no history exists
           if (isFirstConversation || querySnapshot.empty) {
-            const welcomeMessage = `<div class="bot-avatar-wrapper">
+            const welcomeMessage = ` <div class="bot-avatar-wrapper">
               <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
               <span class="online-indicator"></span>
             </div>
-            <div class="message-text">Welcome! How can I assist you today?</div>`;
+            <div class="message-text">What health issue are you facing?</div>`;
       
             const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
             chatBody.appendChild(welcomeMessageDiv);
       
             const quickMessage = `<div class="quick-replies">
-              <button class="quick-reply" onclick="sendQuickReply('What are the benefits of Black Wheat Whole Grain?')">What are the benefits of Black Wheat Whole Grain?</button>
-              <button class="quick-reply" onclick="sendQuickReply('How is black wheat different from regular wheat? ')">How is black wheat different from regular wheat?</button>
-              <button class="quick-reply" onclick="sendQuickReply('Is this product organic and chemical-free?')">Is this product organic and chemical-free?</button>
-            </div>`;
+        <button class="quick-reply" onclick="sendQuickReply('Dialysis')">Dialysis</button>
+        <button class="quick-reply" onclick="sendQuickReply('Diabetes ')">Diabetes </button>
+        <button class="quick-reply" onclick="sendQuickReply('Thyroid')">Thyroid</button>
+         <button class="quick-reply" onclick="sendQuickReply('B.P')">B.P</button>
+         <button class="quick-reply" onclick="sendQuickReply('Obesity / Weight loss')">Obesity / Weight loss</button>
+         <button class="quick-reply" onclick="sendQuickReply('Weight gain')">Weight gain</button>
+          <button class="quick-reply" onclick="sendQuickReply('Asthma')">Asthma</button>
+          <button class="quick-reply" onclick="sendQuickReply('Paralysis')">Paralysis</button>
+          <button class="quick-reply" onclick="sendQuickReply('Acidity')">Acidity</button>
+           <button class="quick-reply" onclick="sendQuickReply('Urine infection')">Urine infection</button>
+           <button class="quick-reply" onclick="sendQuickReply('HIV')">HIV</button>
+            
+           <button class="quick-reply" onclick="sendQuickReply('Physically disabled')">Physically disabled</button>
+           <button class="quick-reply" onclick="sendQuickReply('After delivery')">After delivery</button>
+      </div>`;
       
             const quickMessageDiv = document.createElement("div");
             quickMessageDiv.classList.add("bot-message");
@@ -502,144 +513,177 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
         document.querySelector('#send-message').click();
       };
       const showWelcomeMessage2 = (chatBody) => {
+        // Directly set the last user message to "Continue"
+        const lastUserMessage = "Continue";
+    
+        // Welcome message with the file upload option
         const welcomeMessage = `
-          <div class="bot-avatar-wrapper">
-            <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-            <span class="online-indicator"></span>
-          </div>
-         <div class="message-content">
-      <h3 class="welcome-heading">Welcome to Health Assistant</h3>
-      <p class="welcome-text">I'm here to provide personalized health guidance. Would you like to upload your health reports for more accurate recommendations?</p>
-      
-      <div class="welcome-options">
-        <div class="file-upload-wrapper">
-          <input type="file" accept="image/*,application/pdf" id="welcome-file-input" hidden />
-          <button type="button" id="welcome-file-upload-btn" class="primary-button">
-            <i class="upload-icon"></i> Upload 
-          </button>
-        </div>
-        
-        <div class="quick-replies">
-          <button class="secondary-button" onclick="sendQuickReply('Continue ')">Continue </button>
-          
-        </div>
-      </div>
-    </div>`;
-    const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
-          chatBody.appendChild(welcomeMessageDiv);
-  
-          const fileInput = welcomeMessageDiv.querySelector("#welcome-file-input");
-          const fileUploadBtn = welcomeMessageDiv.querySelector("#welcome-file-upload-btn");
-  
-          fileUploadBtn.addEventListener("click", () => fileInput.click());
-          
-          fileInput.addEventListener("change", () => {
+            <div class="message-container" style="display: flex; align-items: flex-start;">
+                <div class="bot-avatar-wrapper" style="flex-shrink: 0; margin-right: 8px;">
+                    <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+                    <span class="online-indicator" style="position: absolute; bottom: 0; right: 0;"></span>
+                </div>
+                <div class="message-content" style="flex-grow: 1;">
+                    <h3 class="welcome-heading">Welcome to Health Assistant</h3>
+                    <p class="welcome-text">I'm here to provide personalized health guidance. Would you like to upload your health reports for more accurate recommendations?</p>
+                    
+                    <div class="welcome-options" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;">
+                        <div class="file-upload-wrapper">
+                            <input type="file" accept="image/*,application/pdf" id="welcome-file-input" hidden />
+                            <button type="button" id="welcome-file-upload-btn" class="primary-button">
+                                <i class="upload-icon"></i> Upload 
+                            </button>
+                        </div>
+                        
+                        <div class="quick-replies" style="display: flex; gap: 8px;">
+                            <button class="secondary-button" style="background-color: #f0f0f0;" onclick="sendQuickReply('${lastUserMessage}')">Skip</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    
+        // Append the welcome message to the chat body
+        const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
+        chatBody.appendChild(welcomeMessageDiv);
+    
+        // Handle file upload
+        const fileInput = welcomeMessageDiv.querySelector("#welcome-file-input");
+        const fileUploadBtn = welcomeMessageDiv.querySelector("#welcome-file-upload-btn");
+    
+        fileUploadBtn.addEventListener("click", () => fileInput.click());
+    
+        fileInput.addEventListener("change", () => {
             const file = fileInput.files[0];
             if (!file) return;
-  
+    
+            // Store the file in userData (if needed)
             userData.file = file;
-  
-            const fileConfirmation = `
-              <div class="bot-avatar-wrapper">
-                <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-                <span class="online-indicator"></span>
-              </div>
-              <div class="message-text">
-                File "${file.name}" uploaded successfully. Please tell me about your health concern or type "Continue" to proceed.
-              </div>`;
-            const confirmationDiv = createMessageElement(fileConfirmation, "bot-message");
+    
+            // Notify the user that the file has been uploaded
+            const confirmationMessage = ``;
+            const confirmationDiv = createMessageElement(confirmationMessage, "bot-message");
             chatBody.appendChild(confirmationDiv);
             chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-  
+    
+            // Automatically proceed with the "Continue" action
+            sendQuickReply(lastUserMessage);
+    
+            // Clear the file input
             fileInput.value = "";
-          });
-        };
+        });
+    };
       // Add a message counter variable at the beginning of your script
 let messageCount = 0;
 
 // Modify the handleOutgoingMessage function to track messages and show welcomeMessage2
-
 const handleOutgoingMessage = async (e) => {
-  e.preventDefault();
-  userData.message = messageInput.value.trim();
-  messageInput.value = "";
-  messageInput.dispatchEvent(new Event("input"));
-  fileUploadWrapper.classList.remove("file-uploaded");
-
-  // Add patient icon with inline styling
-  let messageContent = `
-    <div class="patient-avatar-wrapper" style="display: flex; gap: 15px;  align-items: center;">
-      
-      <span class="online-indicator" style="display: inline-block; margin-left: -15px; vertical-align: bottom;"></span>
-    
-    <div class="message-text">${userData.message || "[Empty message]"}</div>
-    <img class="patient-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Patient Avatar" width="40" height="40" style="display: inline-block; vertical-align: middle;">
-    </div>`;
+    e.preventDefault();
+    userData.message = messageInput.value.trim();
+    messageInput.value = "";
+    messageInput.dispatchEvent(new Event("input"));
+    fileUploadWrapper.classList.remove("file-uploaded");
   
-  if (userData.file) {
-    messageContent += `<div class="file-icon">
-      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
-      <span>File attached</span>
-    </div>`;
-  }
-
-  const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
-  chatBody.appendChild(outgoingMessageDiv);
-  chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-
-  await storeChatMessage(userData.message || "[Empty message]", "user");
-  
-  // Increment message counter
-  messageCount++;
-console.log(messageContent)
-  setTimeout(async () => {
-    // Check if this is the first message from the user
-    if (messageCount === 1) {
-      // Skip API call entirely for the first message
-      // Instead, immediately show the welcome message 2
-      setTimeout(() => {
-        showWelcomeMessage2(chatBody);
-      }, 1000); // Wait a second to show the welcome message
-    } else {
-      // Normal processing for subsequent messages
-      const thinkingContent = `<div class="bot-avatar-wrapper">
-        <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-        <span class="online-indicator"></span>
-      </div>
-      <div class="message-text">
-        <div class="thinking-indicator">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-      </div>`;
-      const incomingMessageDiv = createMessageElement(thinkingContent, "bot-message", "thinking");
-      chatBody.appendChild(incomingMessageDiv);
-      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-
-      const fileToSend = userData.file;
-      const botResponse = await generateBotResponse(incomingMessageDiv, null, fileToSend);
-
-      let botMessageContent = `<div class="bot-avatar-wrapper">
-        <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-        <span class="online-indicator"></span>
-      </div>
-      <div class="message-text">${botResponse}</div>`;
-      if (fileToSend) {
-        botMessageContent += `<div class="file-icon">
-          <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
-          <span>Pdf </span>
-        </div>`;
+    // Fetch the user's name from a query
+    let userName = "User"; // Default to "User" if the name is not available
+    try {
+      const userQuery = query(collection(db, "users"), where("browserId", "==", currentBrowserId));
+      const querySnapshot = await getDocs(userQuery);
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0]; // Get the first matching document
+        userName = userDoc.data().name; // Extract the user's name
       }
-      incomingMessageDiv.innerHTML = botMessageContent;
-      incomingMessageDiv.classList.remove("thinking");
-
-      await storeChatMessage(botResponse, "bot");
+    } catch (error) {
+      console.error("Error fetching user name:", error);
     }
-    
-    userData.file = null;
-  }, 100);
-};
+  
+    // Add patient icon with inline styling and user name
+    let messageContent = `
+      <div class="patient-avatar-wrapper" style="display: flex; gap: 15px; align-items: center;">
+        <span class="online-indicator" style="display: inline-block; margin-left: -15px; vertical-align: bottom;"></span>
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+          <div class="user-name" style="font-weight: bold; margin-bottom: 5px;">${userName}</div>
+          <div class="message-text">${userData.message || "[Empty message]"}</div>
+        </div>
+        <img class="patient-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Patient Avatar" width="40" height="40" style="display: inline-block; vertical-align: middle;">
+      </div>`;
+  
+    // Add file icon if a file is attached
+    if (userData.file) {
+      messageContent += `<div class="file-icon">
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
+        <span>File attached</span>
+      </div>`;
+    }
+  
+    // Append the outgoing message to the chat body
+    const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
+    chatBody.appendChild(outgoingMessageDiv);
+    chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+  
+    // Store the user's message
+    await storeChatMessage(userData.message || "[Empty message]", "user");
+  
+    // Increment message counter
+    messageCount++;
+    console.log(messageContent);
+  
+    setTimeout(async () => {
+      // Check if this is the first message from the user
+      if (messageCount === 1) {
+        // Skip API call entirely for the first message
+        // Instead, immediately show the welcome message 2
+        setTimeout(() => {
+          showWelcomeMessage2(chatBody);
+        }, 1000); // Wait a second to show the welcome message
+      } else {
+        // Normal processing for subsequent messages
+        const thinkingContent = `
+          <div class="bot-avatar-wrapper">
+            <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+            <span class="online-indicator"></span>
+          </div>
+          <div class="message-text">
+            <div class="thinking-indicator">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>`;
+        const incomingMessageDiv = createMessageElement(thinkingContent, "bot-message", "thinking");
+        chatBody.appendChild(incomingMessageDiv);
+        chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+  
+        // Generate bot response
+        const fileToSend = userData.file;
+        const botResponse = await generateBotResponse(incomingMessageDiv, null, fileToSend);
+  
+        // Construct bot message content
+        let botMessageContent = `
+          <div class="bot-avatar-wrapper">
+            <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+            <span class="online-indicator"></span>
+          </div>
+          <div class="message-text">${botResponse}</div>`;
+        if (fileToSend) {
+          botMessageContent += `
+            <div class="file-icon">
+              <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
+              <span>Pdf</span>
+            </div>`;
+        }
+  
+        // Update the bot message with the response
+        incomingMessageDiv.innerHTML = botMessageContent;
+        incomingMessageDiv.classList.remove("thinking");
+  
+        // Store the bot's response
+        await storeChatMessage(botResponse, "bot");
+      }
+  
+      // Clear the file from userData
+      userData.file = null;
+    }, 100);
+  };
       const generateBotResponse = async (incomingMessageDiv, query = null, file = null) => {
         const userMessage = query || userData.message || "";
         try {

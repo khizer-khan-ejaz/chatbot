@@ -904,13 +904,11 @@ body.show-emoji-picker em-emoji-picker {
       const generateBotResponse = async (incomingMessageDiv) => {
         const messageElement = incomingMessageDiv.querySelector(".message-text");
         
-        const userMessage = "i had dialysis last month; do you have any specific recipes or products for me?"; // From userData.message.toLowerCase()
-        
-        // Typing effect
+        const userMessage = userData.message.toLowerCase(); // Use dynamic user input
         messageElement.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
         
         try {
-          const browserIdString = String(currentBrowserId); // e.g., "browser_1677654321_abc123xyz"
+          const browserIdString = String(currentBrowserId);
           const cacheKey = `${userMessage}_${browserIdString}`;
           const cachedResponse = localStorage.getItem(cacheKey);
           let botResponseText;
@@ -929,24 +927,27 @@ body.show-emoji-picker em-emoji-picker {
       
             if (!apiResponse.ok) throw new Error('Failed to fetch bot response');
             const data = await apiResponse.json();
-            botResponseText = data.response || "Sorry, I don't understand that yet.";
+            botResponseText = data.response || "Sorry, I don’t understand that yet.";
             localStorage.setItem(cacheKey, botResponseText);
           }
       
-          // Regex processing (example response: "Try our **kidney-friendly recipes** - Link")
           botResponseText = botResponseText
-            .replace(/(- Link$|\[Link\]\()/g, (_, match) => match === '- Link' ? '• LINK_PLACEHOLDER' : '')
-            .replace(/https?:\/\/[^\s()]+(?:\([^\)]*\)|[^\s]*)*/g, url => `<a href="${url}" target="_blank" class="bot-link">[Link]</a>`)
-            .replace(/(\n|^)[\s\u200B\u00A0]*-\s+|\n/g, match => match.includes('\n') ? '<br>' : '$1• ')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
-              const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
-              return `• <a href="#" class="product-link">View ${productName}</a>`;
-            });
+    .replace(/(- Link$|\[Link\]\()/g, '') // Remove "- Link" and "[Link]("
+    .replace(/https?:\/\/[^\s\]]+/g, url => 
+        `<a href="${url}" target="_blank" class="bot-link">[Link]</a>`) // Fix URL formatting
+    .replace(/(\n|^)[\s\u200B\u00A0]*-\s+/g, '$1• ') // Convert "- " into bullet points
+    .replace(/\n/g, '<br>') // Convert new lines to <br>
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
+    .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
+        const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
+        return `• <a href="#" class="product-link">View ${productName}</a>`;
+    })
+    .replace(/[>\])]+botresponse/g, ''); // Remove unwanted ">)]>botresponse"
+ // Remove unwanted ">)]>botresponse"
+
       
-          // DOM update
           requestAnimationFrame(() => {
-            messageElement.innerHTML = botResponseText; // e.g., "Try our <strong>kidney-friendly recipes</strong> • <a href='#' class='product-link'>View kidney-friendly recipes</a>"
+            messageElement.innerHTML = botResponseText;
             incomingMessageDiv.classList.remove("thinking");
             chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
           });
