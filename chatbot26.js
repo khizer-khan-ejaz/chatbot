@@ -1,86 +1,86 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-import { getFirestore, collection, query, where, getDocs, addDoc, orderBy, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+  import { getFirestore, collection, query, where, getDocs, addDoc, orderBy, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
-(function () {
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.type = 'module';
-      script.onload = () => resolve();
-      script.onerror = () => reject();
-      document.head.appendChild(script);
-    });
-  }
+  (function () {
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.type = 'module';
+        script.onload = () => resolve();
+        script.onerror = () => reject();
+        document.head.appendChild(script);
+      });
+    }
 
-  Promise.all([
-    loadScript('https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js'),
-  ]).then(() => {
-    const firebaseConfig = {
-      apiKey: 'AIzaSyBz-gI6Pmwvsp09_Qp_Q6qS3ECxAfxsAC4',
-      authDomain: 'chatbot-9ee0f.firebaseapp.com',
-      projectId: 'chatbot-9ee0f',
-      storageBucket: 'chatbot-9ee0f.appspot.com',
-      messagingSenderId: '127978721082',
-      appId: '1:127978721082:web:6de1daa276b0fa12928a03',
-      measurementId: 'G-BP73ZG0D4Z',
-    };
+    Promise.all([
+      loadScript('https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js'),
+    ]).then(() => {
+      const firebaseConfig = {
+        apiKey: 'AIzaSyBz-gI6Pmwvsp09_Qp_Q6qS3ECxAfxsAC4',
+        authDomain: 'chatbot-9ee0f.firebaseapp.com',
+        projectId: 'chatbot-9ee0f',
+        storageBucket: 'chatbot-9ee0f.appspot.com',
+        messagingSenderId: '127978721082',
+        appId: '1:127978721082:web:6de1daa276b0fa12928a03',
+        measurementId: 'G-BP73ZG0D4Z',
+      };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const storage = getStorage(app);
 
-    const getBrowserId = () => {
-      let browserId = localStorage.getItem('chatbot_browser_id');
-      if (!browserId) {
-        browserId = 'browser_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('chatbot_browser_id', browserId);
-      }
-      return browserId;
-    };
+      const getBrowserId = () => {
+        let browserId = localStorage.getItem('chatbot_browser_id');
+        if (!browserId) {
+          browserId = 'browser_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+          localStorage.setItem('chatbot_browser_id', browserId);
+        }
+        return browserId;
+      };
 
-    const currentBrowserId = getBrowserId();
-    console.log("Browser ID:", currentBrowserId);
+      const currentBrowserId = getBrowserId();
+      console.log("Browser ID:", currentBrowserId);
 
-    const chatbotHTML = `
-      <button id="chatbot-toggler">
-        <span class="material-symbols-rounded">mode_comment</span>
-        <span class="material-symbols-rounded">close</span>
-      </button>
-      <div class="chatbot-popup">
-        <div class="chat-interface" id="chat-interface">
-          <div class="chat-header">
-            <div class="header-info">
-              <img class="chatbot-logo" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-              <h2 class="logo-text">KhadarGroups</h2>
-            </div>
-            <div> 
-              <button id="resetChatHistory" class="material-symbols-rounded">delete</button>
-              <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
-            </div>
-          </div>
-          <div class="chat-body" id="chat-body"></div>
-          <div class="chat-footer">
-            <form action="#" class="chat-form" id="chat-form">
-              <textarea placeholder="Message..." class="message-input" id="message-input" required></textarea>
-              <div class="chat-controls">
-                <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
-                <div class="file-upload-wrapper">
-                  <input type="file" accept="image/*,application/pdf" id="file-input" hidden />
-                  <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
-                  <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
-                </div>
-                <button type="submit" id="send-message" class="material-symbols-rounded">arrow_upward</button>
+      const chatbotHTML = `
+        <button id="chatbot-toggler">
+          <span class="material-symbols-rounded">mode_comment</span>
+          <span class="material-symbols-rounded">close</span>
+        </button>
+        <div class="chatbot-popup">
+          <div class="chat-interface" id="chat-interface">
+            <div class="chat-header">
+              <div class="header-info">
+                <img class="chatbot-logo" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+                <h2 class="logo-text">KhadarGroups</h2>
               </div>
-            </form>
+              <div> 
+                <button id="resetChatHistory" class="material-symbols-rounded">delete</button>
+                <button id="close-chatbot" class="material-symbols-rounded">keyboard_arrow_down</button>
+              </div>
+            </div>
+            <div class="chat-body" id="chat-body"></div>
+            <div class="chat-footer">
+              <form action="#" class="chat-form" id="chat-form">
+                <textarea placeholder="Message..." class="message-input" id="message-input" required></textarea>
+                <div class="chat-controls">
+                  <button type="button" id="emoji-picker" class="material-symbols-outlined">sentiment_satisfied</button>
+                  <div class="file-upload-wrapper">
+                    <input type="file" accept="image/*,application/pdf" id="file-input" hidden />
+                    <button type="button" id="file-upload" class="material-symbols-rounded">attach_file</button>
+                    <button type="button" id="file-cancel" class="material-symbols-rounded">close</button>
+                  </div>
+                  <button type="submit" id="send-message" class="material-symbols-rounded">arrow_upward</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
 
-    const style = document.createElement('style');
-    style.innerHTML = `
+      const style = document.createElement('style');
+      style.innerHTML = `
       @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap');
       * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
       body { width: 100%; min-height: 100vh; }
@@ -134,6 +134,34 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       .chat-body .bot-message .message-text { background: #fffdfd; border-radius: 13px 13px 13px 3px; margin-bottom: 5px; }
       .chat-body .user-message { flex-direction: column; align-items: flex-end; }
       .chat-body .user-message .message-text { color: #fff; background: #ee5d27; border-radius: 13px 13px 3px 13px; }
+      .message-text {
+    /* Base styles with improved typography */
+    font-size: 0.85rem;
+    line-height: 1.4; /* Tighter but readable line spacing */
+    max-width: 90%; /* Slightly narrower width for better readability */
+    padding: 8px 12px; /* Balanced padding */
+    margin-bottom: 5px;
+    border-radius: 13px 13px 3px 13px;
+    color: black;
+    background:rgb(248, 245, 244);
+    
+    /* Optional: Add smooth transition for subtle interactivity */
+    transition: all 0.2s ease;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .message-text {
+        max-width: 95%; /* Slightly wider on smaller screens */
+        font-size: 0.8rem; /* Slightly smaller font on mobile */
+    }
+  }
+
+  /* Optional hover effect */
+  .message-text:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
       .chat-body .user-message .attachment { width: 50%; margin-top: -7px; border-radius: 13px 3px 13px 13px; }
       .chat-body .bot-message .thinking-indicator { display: flex; gap: 4px; padding-block: 15px; }
       .chat-body .bot-message .thinking-indicator .dot { height: 7px; width: 7px; opacity: 0.7; border-radius: 50%; background: #ee5d27; animation: dotPulse 1.8s ease-in-out infinite; }
@@ -179,34 +207,34 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
   max-width: 300px;
   margin: 0 auto;
-}
+  }
 
-.welcome-heading {
+  .welcome-heading {
   color: #1e40af;
   font-size: 18px;
   margin: 0 0 12px 0;
   font-weight: 600;
-}
+  }
 
-.welcome-text {
+  .welcome-text {
   color: #475569;
   font-size: 14px;
   line-height: 1.5;
   margin: 0 0   0;
-}
+  }
 
-.welcome-options {
+  .welcome-options {
   display: flex;
   flex-direction: column;
   gap: 15px;
-}
+  }
 
-.file-upload-wrapper {
+  .file-upload-wrapper {
   width: 100%;
-}
+  }
 
-.primary-button {
-     background-color: #0ea5e9;
+  .primary-button {
+    background-color: #0ea5e9;
     color: white;
     padding: 11px 16px;
     border-radius: 8px;
@@ -217,27 +245,27 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     transition: background-color 0.2s ease;
     margin-left: 36px;
     margin-top: 20px;
-}
+  }
 
-.primary-button:hover {
+  .primary-button:hover {
   background-color: #0284c7;
-}
+  }
 
-.upload-icon {
+  .upload-icon {
   display: inline-block;
   width: 16px;
   height: 16px;
   background-image: url('path-to-your-icon.svg');
   margin-right: 8px;
-}
+  }
 
-.quick-replies {
+  .quick-replies {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
+  }
 
-.secondary-button {
+  .secondary-button {
   background-color: #e0f2fe;
   color: #0284c7;
   padding: 12px 16px;
@@ -247,488 +275,434 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
   width: 80%;
   cursor: pointer;
   transition: background-color 0.2s ease;
-}
+  }
 
-.secondary-button:hover {
+  .secondary-button:hover {
   background-color: #bae6fd;
-}
+  }
 
 
 
-/* Responsive adjustments */
-@media (min-width: 480px) {
+  /* Responsive adjustments */
+  @media (min-width: 480px) {
   .quick-replies {
     flex-direction: row;
     gap: 10px;
   }
-}
+  }
     `;
-    document.head.appendChild(style);
+      document.head.appendChild(style);
 
-    const chatbotContainer = document.createElement('div');
-    chatbotContainer.innerHTML = chatbotHTML;
-    document.body.appendChild(chatbotContainer);
+      const chatbotContainer = document.createElement('div');
+      chatbotContainer.innerHTML = chatbotHTML;
+      document.body.appendChild(chatbotContainer);
 
-    const storedToken = localStorage.getItem("chatbotToken");
-    if (!storedToken || storedToken !== "199908") {
-      console.warn("Unauthorized access! Token is missing or invalid.");
-    } else {
-      console.log("Token validated. Chatbot is active.");
+      const storedToken = localStorage.getItem("chatbotToken");
+      if (!storedToken || storedToken !== "199908") {
+        console.warn("Unauthorized access! Token is missing or invalid.");
+      } else {
+        console.log("Token validated. Chatbot is active.");
 
-      const chatBody = document.querySelector(".chat-body");
-      const messageInput = document.querySelector(".message-input");
-      const sendMessage = document.querySelector("#send-message");
-      const fileInput = document.querySelector("#file-input");
-      const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
-      const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
-      const chatbotToggler = document.querySelector("#chatbot-toggler");
-      const closeChatbot = document.querySelector("#close-chatbot");
+        const chatBody = document.querySelector(".chat-body");
+        const messageInput = document.querySelector(".message-input");
+        const sendMessage = document.querySelector("#send-message");
+        const fileInput = document.querySelector("#file-input");
+        const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
+        const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
+        const chatbotToggler = document.querySelector("#chatbot-toggler");
+        const closeChatbot = document.querySelector("#close-chatbot");
 
-      const userData = {
-        message: null,
-        file: null,
-      };
+        const userData = {
+          message: null,
+          file: null,
+        };
 
-      const createMessageElement = (content, ...classes) => {
-        const div = document.createElement("div");
-        div.classList.add("message", ...classes);
-        div.innerHTML = content;
-        return div;
-      };
+        const createMessageElement = (content, ...classes) => {
+          const div = document.createElement("div");
+          div.classList.add("message", ...classes);
+          div.innerHTML = content;
+          return div;
+        };
 
-      const storeChatMessage = async (message, sender, file = null) => {
-        try {
-          const chatRef = collection(db, "chats");
-          await addDoc(chatRef, {
-            message: message,
-            sender: sender,
-            timestamp: new Date(),
-            browserId: currentBrowserId,
-          });
-        } catch (error) {
-          console.error("Error storing chat message:", error);
-        }
-      };
+        const storeChatMessage = async (message, sender, file = null) => {
+          try {
+            const chatRef = collection(db, "chats");
+            await addDoc(chatRef, {
+              message: message,
+              sender: sender,
+              timestamp: new Date(),
+              browserId: currentBrowserId,
+            });
+          } catch (error) {
+            console.error("Error storing chat message:", error);
+          }
+        };
 
-      const createUserInfoFormMessage = () => {
-        return `
-          <div class="bot-avatar-wrapper">
-            <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-            <span class="online-indicator"></span>
-          </div>
-          <div class="message-text">
-            <div class="user-info-form" id="user-info-form">
-              <div class="form-header">
-                <h2>Welcome to KhadarGroups</h2>
-                <p>Please provide your details to start chatting</p>
-              </div>
-              <form id="user-info-submit" class="info-form">
-                <div class="form-field">
-                
-                  <input type="text" id="user-name" placeholder="Enter your name" required />
-                </div>
-                <div class="form-field">
-                
-                  <input type="tel" id="user-phone" placeholder="Enter your phone number" pattern="[0-9]{10}" required />
-                </div>
-                <div class="form-field">
-                
-                  <input type="number" id="user-age" placeholder="Enter your age" min="1" max="120" required />
-                </div>
-                <button type="submit" class="submit-btn">Start Chat</button>
-              </form>
-            </div>
-          </div>
-        `;
-      };
-
-      const showWelcomeMessage = (chatBody) => {
-        const welcomeMessage = `
-          <div class="bot-avatar-wrapper">
-              <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-              <span class="online-indicator"></span>
-            </div>
-            <div class="message-text">What health issue are you facing?</div>`;
-        
-        const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
-        chatBody.appendChild(welcomeMessageDiv);
-        const quickMessage = `<div class="quick-replies">
-        <button class="quick-reply" onclick="sendQuickReply('Dialysis')">Dialysis</button>
-        <button class="quick-reply" onclick="sendQuickReply('Diabetes ')">Diabetes </button>
-        <button class="quick-reply" onclick="sendQuickReply('Thyroid')">Thyroid</button>
-         <button class="quick-reply" onclick="sendQuickReply('B.P')">B.P</button>
-         <button class="quick-reply" onclick="sendQuickReply('Obesity / Weight loss')">Obesity / Weight loss</button>
-         <button class="quick-reply" onclick="sendQuickReply('Weight gain')">Weight gain</button>
-          <button class="quick-reply" onclick="sendQuickReply('Asthma')">Asthma</button>
-          <button class="quick-reply" onclick="sendQuickReply('Paralysis')">Paralysis</button>
-          <button class="quick-reply" onclick="sendQuickReply('Acidity')">Acidity</button>
-           <button class="quick-reply" onclick="sendQuickReply('Urine infection')">Urine infection</button>
-           <button class="quick-reply" onclick="sendQuickReply('HIV')">HIV</button>
-            
-           <button class="quick-reply" onclick="sendQuickReply('Physically disabled')">Physically disabled</button>
-           <button class="quick-reply" onclick="sendQuickReply('After delivery')">After delivery</button>
-      </div>`;
-      const quickMessageDiv = document.createElement("div");
-      quickMessageDiv.classList.add("bot-message");
-      quickMessageDiv.innerHTML = quickMessage;
-      chatBody.appendChild(quickMessageDiv);
-        const fileInput = welcomeMessageDiv.querySelector("#welcome-file-input");
-        const fileUploadBtn = welcomeMessageDiv.querySelector("#welcome-file-upload-btn");
-
-        fileUploadBtn.addEventListener("click", () => fileInput.click());
-        
-        fileInput.addEventListener("change", () => {
-          const file = fileInput.files[0];
-          if (!file) return;
-
-          userData.file = file;
-
-          const fileConfirmation = `
+        const createUserInfoFormMessage = () => {
+          return `
             <div class="bot-avatar-wrapper">
               <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
               <span class="online-indicator"></span>
             </div>
             <div class="message-text">
-              File "${file.name}" uploaded successfully. Please tell me about your health concern or type "Continue" to proceed.
-            </div>`;
-          const confirmationDiv = createMessageElement(fileConfirmation, "bot-message");
-          chatBody.appendChild(confirmationDiv);
-          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+              <div class="user-info-form" id="user-info-form">
+                <div class="form-header">
+                  <h2>Welcome to KhadarGroups</h2>
+                  <p>Please provide your details to start chatting</p>
+                </div>
+                <form id="user-info-submit" class="info-form">
+                  <div class="form-field">
+                    <input type="text" id="user-name" placeholder="Enter your name" required />
+                  </div>
+                  <div class="form-field">
+                    <input type="tel" id="user-phone" placeholder="Enter your phone number" pattern="[0-9]{10}" required />
+                  </div>
+                  <div class="form-field">
+                    <input type="number" id="user-age" placeholder="Enter your age" min="1" max="120" required />
+                  </div>
+                  <button type="submit" class="submit-btn">Start Chat</button>
+                </form>
+              </div>
+            </div>
+          `;
+        };
 
-          fileInput.value = "";
-        });
-      };
-
-      const loadChatHistory = async () => {
-        try {
-          const chatRef = collection(db, "chats");
-          const q = query(
-            chatRef,
-            where("browserId", "==", currentBrowserId),
-            orderBy("timestamp", "asc")
-          );
-      
-          const querySnapshot = await getDocs(q);
-          const chatBody = document.querySelector(".chat-body");
-          if (!chatBody) {
-            console.error("Chat body not found!");
-            return;
+        const getUserName = async () => {
+          try {
+            const userRef = collection(db, "users");
+            const q = query(userRef, where("browserId", "==", currentBrowserId));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+              const userDoc = querySnapshot.docs[0];
+              const name = userDoc.data().name || "User";
+              console.log("Fetched username:", name);
+              return name;
+            }
+            console.log("No user found, defaulting to 'User'");
+            return "User";
+          } catch (error) {
+            console.error("Error fetching user name:", error);
+            return "User";
           }
-      
-          // Use sessionStorage instead of localStorage for firstConversationDone
-          const isFirstConversation = !sessionStorage.getItem('firstConversationDone');
-      
-          // Clear existing messages
-          chatBody.innerHTML = "";
-      
-          // Show welcome message and quick replies if it's the first conversation or no history exists
-          if (isFirstConversation || querySnapshot.empty) {
-            const welcomeMessage = ` <div class="bot-avatar-wrapper">
+        };
+
+        const showWelcomeMessage = async (chatBody) => {
+          const userName = await getUserName();
+          const welcomeMessage = `
+            <div class="bot-avatar-wrapper">
               <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
               <span class="online-indicator"></span>
             </div>
-            <div class="message-text">Welcome! What health issues are you facing??</div>`;
-      
-            const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
-            chatBody.appendChild(welcomeMessageDiv);
-      
-            const quickMessage = `<div class="quick-replies">
-        <button class="quick-reply" onclick="sendQuickReply('Dialysis')">Dialysis</button>
-        <button class="quick-reply" onclick="sendQuickReply('Diabetes ')">Diabetes </button>
-        <button class="quick-reply" onclick="sendQuickReply('Thyroid')">Thyroid</button>
-         <button class="quick-reply" onclick="sendQuickReply('B.P')">B.P</button>
-         <button class="quick-reply" onclick="sendQuickReply('Obesity / Weight loss')">Obesity / Weight loss</button>
-         <button class="quick-reply" onclick="sendQuickReply('Weight gain')">Weight gain</button>
-          <button class="quick-reply" onclick="sendQuickReply('Asthma')">Asthma</button>
-          <button class="quick-reply" onclick="sendQuickReply('Paralysis')">Paralysis</button>
-          <button class="quick-reply" onclick="sendQuickReply('Acidity')">Acidity</button>
-           <button class="quick-reply" onclick="sendQuickReply('Urine infection')">Urine infection</button>
-           <button class="quick-reply" onclick="sendQuickReply('HIV')">HIV</button>
-            
-           <button class="quick-reply" onclick="sendQuickReply('Physically disabled')">Physically disabled</button>
-           <button class="quick-reply" onclick="sendQuickReply('After delivery')">After delivery</button>
-      </div>`;
-      
-            const quickMessageDiv = document.createElement("div");
-            quickMessageDiv.classList.add("bot-message");
-            quickMessageDiv.innerHTML = quickMessage;
-            chatBody.appendChild(quickMessageDiv);
-      
-            // Set the flag in sessionStorage instead of localStorage
-            sessionStorage.setItem('firstConversationDone', 'true');
-          }
-      
-          // Load existing messages
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            console.log("Displaying message:", data.message);
-      
-            if (data.sender === "user") {
-              const messageContent = `<div class="message-text">${data.message}</div>
-                ${data.file && data.file.data ? `<img src="data:${data.file.mime_type};base64,${data.file.data}" class="attachment" />` : ""}`;
-              const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
-              chatBody.appendChild(outgoingMessageDiv);
+            <div class="message-text">Welcome ${userName}, What health issue are you facing?</div>`;
+          const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
+          chatBody.appendChild(welcomeMessageDiv);
+
+          const quickMessage = `
+            <div class="quick-replies">
+              <button class="quick-reply" onclick="sendQuickReply('Dialysis')">Dialysis</button>
+              <button class="quick-reply" onclick="sendQuickReply('Diabetes')">Diabetes</button>
+              <button class="quick-reply" onclick="sendQuickReply('Thyroid')">Thyroid</button>
+              <button class="quick-reply" onclick="sendQuickReply('B.P')">B.P</button>
+              <button class="quick-reply" onclick="sendQuickReply('Obesity / Weight loss')">Obesity / Weight loss</button>
+              <button class="quick-reply" onclick="sendQuickReply('Weight gain')">Weight gain</button>
+              <button class="quick-reply" onclick="sendQuickReply('Asthma')">Asthma</button>
+              <button class="quick-reply" onclick="sendQuickReply('Paralysis')">Paralysis</button>
+              <button class="quick-reply" onclick="sendQuickReply('Acidity')">Acidity</button>
+              <button class="quick-reply" onclick="sendQuickReply('Urine infection')">Urine infection</button>
+              <button class="quick-reply" onclick="sendQuickReply('HIV')">HIV</button>
+              <button class="quick-reply" onclick="sendQuickReply('Physically disabled')">Physically disabled</button>
+              <button class="quick-reply" onclick="sendQuickReply('After delivery')">After delivery</button>
+            </div>`;
+          const quickMessageDiv = document.createElement("div");
+          quickMessageDiv.classList.add("bot-message");
+          quickMessageDiv.innerHTML = quickMessage;
+          chatBody.appendChild(quickMessageDiv);
+
+          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+          localStorage.setItem('welcomeShown', 'true'); // Set flag after showing welcome
+        };
+
+        const loadChatHistory = async () => {
+          try {
+            const chatRef = collection(db, "chats");
+            const q = query(chatRef, where("browserId", "==", currentBrowserId), orderBy("timestamp", "asc"));
+            const querySnapshot = await getDocs(q);
+            const chatBody = document.querySelector(".chat-body");
+            if (!chatBody) return;
+
+            chatBody.innerHTML = "";
+            const welcomeShown = localStorage.getItem('welcomeShown');
+            const userInfoSubmitted = await checkUserInfoSubmitted();
+
+            if (!welcomeShown) {
+              if (!userInfoSubmitted) {
+                const welcomeMessageDiv = createMessageElement(createUserInfoFormMessage(), "bot-message");
+                chatBody.appendChild(welcomeMessageDiv);
+                chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+                const form = document.getElementById("user-info-submit");
+                form.addEventListener("submit", async (e) => {
+                  e.preventDefault();
+                  const name = document.getElementById("user-name").value.trim();
+                  const phone = document.getElementById("user-phone").value.trim();
+                  const age = document.getElementById("user-age").value.trim();
+
+                  if (name && phone && age) {
+                    await storeUserInfo(name, phone, age);
+                    chatBody.innerHTML = "";
+                    showWelcomeMessage(chatBody);
+                  }
+                });
+              } else {
+                showWelcomeMessage(chatBody);
+              }
             } else {
-              const messageContent = `<div class="bot-avatar-wrapper">
+              querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.sender === "user") {
+                  const messageContent = `<div class="message-text">${data.message}</div>`;
+                  chatBody.appendChild(createMessageElement(messageContent, "user-message"));
+                } else {
+                  const messageContent = `
+                    <div class="bot-avatar-wrapper">
+                      <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+                      <span class="online-indicator"></span>
+                    </div>
+                    <div class="message-text">${data.message}</div>`;
+                  chatBody.appendChild(createMessageElement(messageContent, "bot-message"));
+                }
+              });
+              chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+            }
+          } catch (error) {
+            console.error("Error loading chat history:", error);
+          }
+        };
+
+        const storeUserInfo = async (name, phone, age) => {
+          try {
+            const userRef = collection(db, "users");
+            const docRef = await addDoc(userRef, {
+              name: name,
+              phone: phone,
+              age: age,
+              browserId: currentBrowserId,
+              timestamp: new Date(),
+            });
+            console.log("User info stored successfully with ID:", docRef.id);
+          } catch (error) {
+            console.error("Error storing user info:", error);
+          }
+        };
+
+        const checkUserInfoSubmitted = async () => {
+          const userRef = collection(db, "users");
+          const q = query(userRef, where("browserId", "==", currentBrowserId));
+          const querySnapshot = await getDocs(q);
+          return !querySnapshot.empty;
+        };
+
+        window.sendQuickReply = function (message) {
+          messageInput.value = message;
+          document.querySelector('#send-message').click();
+        };
+
+        const handleOutgoingMessage = async (e) => {
+          e.preventDefault();
+          userData.message = messageInput.value.trim();
+          messageInput.value = "";
+          messageInput.dispatchEvent(new Event("input"));
+          fileUploadWrapper.classList.remove("file-uploaded");
+
+          let messageContent = `
+            <div class="message-text">${userData.message || "[Empty message]"}</div>`;
+          if (userData.file) {
+            messageContent += `<div class="file-icon">
+              <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
+              <span>File attached</span>
+            </div>`;
+          }
+
+          const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
+          chatBody.appendChild(outgoingMessageDiv);
+          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+          await storeChatMessage(userData.message || "[Empty message]", "user");
+
+          setTimeout(async () => {
+            const thinkingContent = `
+              <div class="bot-avatar-wrapper">
                 <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
                 <span class="online-indicator"></span>
               </div>
-              <div class="message-text">${data.message}</div>`;
-              const incomingMessageDiv = createMessageElement(messageContent, "bot-message");
-              chatBody.appendChild(incomingMessageDiv);
+              <div class="message-text">
+                <div class="thinking-indicator">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </div>
+              </div>`;
+            const incomingMessageDiv = createMessageElement(thinkingContent, "bot-message", "thinking");
+            chatBody.appendChild(incomingMessageDiv);
+            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+            const fileToSend = userData.file;
+            const botResponse = await generateBotResponse(incomingMessageDiv, null, fileToSend);
+
+            let botMessageContent = `
+              <div class="bot-avatar-wrapper">
+                <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+                <span class="online-indicator"></span>
+              </div>
+              <div class="message-text">${botResponse}</div>`;
+            if (fileToSend) {
+              botMessageContent += `<div class="file-icon">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
+                <span>Pdf</span>
+              </div>`;
             }
-          });
-      
-          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-        } catch (error) {
-          console.error("Error loading chat history:", error);
-        }
-      };
+            incomingMessageDiv.innerHTML = botMessageContent;
+            incomingMessageDiv.classList.remove("thinking");
 
-      const storeUserInfo = async (name, phone, age) => {
-        try {
-          const userRef = collection(db, "users");
-          await addDoc(userRef, {
-            name: name,
-            phone: phone,
-            age: age,
-            browserId: currentBrowserId,
-            timestamp: new Date(),
-          });
-          console.log("User info stored successfully");
-        } catch (error) {
-          console.error("Error storing user info:", error);
-        }
-      };
-
-      const checkUserInfoSubmitted = async () => {
-        const userRef = collection(db, "users");
-        const q = query(userRef, where("browserId", "==", currentBrowserId));
-        const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty;
-      };
-
-      window.sendQuickReply = function (message) {
-        messageInput.value = message;
-        document.querySelector('#send-message').click();
-      };
-      
-      // Add a message counter variable at the beginning of your script
-
-      let messageCount = 4; // Initialize message count
-
-// Modify the handleOutgoingMessage function to track messages and show welcomeMessage2
-const handleOutgoingMessage = async (e) => {
-    e.preventDefault();
-    userData.message = messageInput.value.trim();
-    messageInput.value = "";
-    messageInput.dispatchEvent(new Event("input"));
-    fileUploadWrapper.classList.remove("file-uploaded");
-  
-    // Add patient icon with inline styling
-    let messageContent = `
-      <div class="patient-avatar-wrapper" style="display: inline-flex; align-items: center;">
-        <img class="patient-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Patient Avatar" width="40" height="40" style="display: inline-block; vertical-align: middle;">
-        <span class="online-indicator" style="display: inline-block; margin-left: -15px; vertical-align: bottom;"></span>
-      </div>
-      <div class="message-text">${userData.message || "[Empty message]"}</div>`;
-    
-    if (userData.file) {
-      messageContent += `<div class="file-icon">
-        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
-        <span>File attached</span>
-      </div>`;
-    }
-  
-    const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
-    chatBody.appendChild(outgoingMessageDiv);
-    chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-  
-    await storeChatMessage(userData.message || "[Empty message]", "user");
-    
-    // Increment message counter
-    messageCount++;
-  
-    setTimeout(async () => {
-      // Normal processing for subsequent messages
-      const thinkingContent = `<div class="bot-avatar-wrapper">
-        <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-        <span class="online-indicator"></span>
-      </div>
-      <div class="message-text">
-        <div class="thinking-indicator">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-      </div>`;
-      const incomingMessageDiv = createMessageElement(thinkingContent, "bot-message", "thinking");
-      chatBody.appendChild(incomingMessageDiv);
-      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-  
-      const fileToSend = userData.file;
-      const botResponse = await generateBotResponse(incomingMessageDiv, null, fileToSend);
-  
-      let botMessageContent = `<div class="bot-avatar-wrapper">
-        <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-        <span class="online-indicator"></span>
-      </div>
-      <div class="message-text">${botResponse}</div>`;
-      if (fileToSend) {
-        botMessageContent += `<div class="file-icon">
-          <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="File Icon" width="20" height="20">
-          <span>Pdf </span>
-        </div>`;
-      }
-      incomingMessageDiv.innerHTML = botMessageContent;
-      incomingMessageDiv.classList.remove("thinking");
-  
-      await storeChatMessage(botResponse, "bot");
-      
-      userData.file = null;
-    }, 100);
-  };
-      const generateBotResponse = async (incomingMessageDiv, query = null, file = null) => {
-        const userMessage = query || userData.message || "";
-        try {
-          const browserIdString = String(currentBrowserId);
-          const cacheKey = `${userMessage}_${file ? file.name : "no-file"}_${browserIdString}`;
-          const cachedResponse = localStorage.getItem(cacheKey);
-      
-
-          const formData = new FormData();
-          formData.append("query", userMessage);
-          formData.append("session_id", browserIdString);
-          if (file) {
-            formData.append("file", file, file.name);
-          }
-
-          const apiResponse = await fetch("https://khadargroups-ai-chatbot.vercel.app/chat", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!apiResponse.ok) {
-            throw new Error(`API Error (${apiResponse.status}): ${await apiResponse.text()}`);
-          }
-
-          const data = await apiResponse.json();
-          let botResponseText = data.message || "Sorry, I don't understand that yet.";
-          if (file && data.url) {
-            botResponseText += ` File uploaded: ${data.url}`;
-          }
-
-          localStorage.setItem(cacheKey, botResponseText);
-          botResponseText = botResponseText
-          .replace(/(- Link$|\[Link\]\()/g, '') // Remove "- Link" and "[Link]("
-          .replace(/https?:\/\/[^\s\]]+/g, url => 
-              `<a href="${url}" target="_blank" class="bot-link">[Link]</a>`) // Fix URL formatting
-          .replace(/(\n|^)[\s\u200B\u00A0]*-\s+/g, '$1• ') // Convert "- " into bullet points
-          .replace(/\n/g, '<br>') // Convert new lines to <br>
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
-          .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
-              const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
-              return `• <a href="#" class="product-link">View ${productName}</a>`;
-          })
-          .replace(/[>\])]+botresponse/g, '');
-          return botResponseText;
-        } catch (error) {
-          console.error("Error in generateBotResponse:", error);
-          return `Sorry, there was an error: ${error.message}`;
-        }
-      };
-
-      const resetChatHistory = async () => {
-        const chatBody = document.querySelector(".chat-body");
-        if (!chatBody) return;
-        
-        const userConfirmed = confirm("Are you sure you want to reset the chat? This will delete all previous messages.");
-        if (!userConfirmed) return;
-        
-        chatBody.innerHTML = "";
-        await deleteChatHistory();
-        showWelcomeMessage(chatBody);
-        sessionStorage.removeItem('firstConversationDone');
-        localStorage.removeItem('skipLoadingChatHistory');
-        
-        // Reset message counter to 0
-  
-      };
-
-      const deleteChatHistory = async () => {
-        try {
-          const chatRef = collection(db, "chats");
-          const q = query(chatRef, where("browserId", "==", currentBrowserId));
-          const querySnapshot = await getDocs(q);
-          querySnapshot.forEach(async (doc) => {
-            await deleteDoc(doc.ref);
-            messageCount = 0;
-          });
-          console.log("Chat history deleted from Firestore successfully.");
-        } catch (error) {
-          console.error("Error deleting chat history from Firestore:", error);
-        }
-      };
-
-      sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
-      messageInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          if (messageInput.value.trim() !== "") {
-            handleOutgoingMessage(e);
-          }
-        }
-      });
-      document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
-      fileInput.addEventListener("change", () => {
-        const file = fileInput.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          fileInput.value = "";
-          let imgElement = fileUploadWrapper.querySelector("img");
-          if (!imgElement) {
-            imgElement = document.createElement("img");
-            fileUploadWrapper.appendChild(imgElement);
-          }
-          imgElement.src = e.target.result;
-          fileUploadWrapper.classList.add("file-uploaded");
+            await storeChatMessage(botResponse, "bot");
+            userData.file = null;
+          }, 100);
         };
-        reader.readAsDataURL(file);
-        userData.file = file;
-      });
-      fileCancelButton.addEventListener("click", () => {
-        userData.file = null;
-        fileUploadWrapper.classList.remove("file-uploaded");
-      });
-      closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
-      chatbotToggler.addEventListener("click", async () => {
-        document.body.classList.toggle("show-chatbot");
-        if (document.body.classList.contains("show-chatbot")) {
-          document.getElementById("chat-interface").style.display = "block";
-          loadChatHistory();
-        }
-      });
-      document.getElementById("resetChatHistory").addEventListener("click", resetChatHistory);
 
-      const picker = new EmojiMart.Picker({
-        theme: "light",
-        skinTonePosition: "none",
-        previewPosition: "none",
-        onEmojiSelect: (emoji) => {
-          const { selectionStart: start, selectionEnd: end } = messageInput;
-          messageInput.setRangeText(emoji.native, start, end, "end");
-          messageInput.focus();
-        },
-        onClickOutside: (e) => {
-          if (e.target.id === "emoji-picker") {
-            document.body.classList.toggle("show-emoji-picker");
-          } else {
-            document.body.classList.remove("show-emoji-picker");
+        const generateBotResponse = async (incomingMessageDiv, query = null, file = null) => {
+          const userMessage = query || userData.message || "";
+          try {
+            const browserIdString = String(currentBrowserId);
+            const cacheKey = `${userMessage}_${file ? file.name : "no-file"}_${browserIdString}`;
+            const cachedResponse = localStorage.getItem(cacheKey);
+
+            const formData = new FormData();
+            formData.append("query", userMessage);
+            formData.append("session_id", browserIdString);
+            if (file) {
+              formData.append("file", file, file.name);
+            }
+
+            const apiResponse = await fetch("https://khadargroups-ai-chatbot.vercel.app/chat", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!apiResponse.ok) {
+              throw new Error(`API Error (${apiResponse.status}): ${await apiResponse.text()}`);
+            }
+
+            const data = await apiResponse.json();
+            let botResponseText = data.message || "Sorry, I don't understand that yet.";
+            if (file && data.url) {
+              botResponseText += ` File uploaded: ${data.url}`;
+            }
+
+            localStorage.setItem(cacheKey, botResponseText);
+            botResponseText = botResponseText
+              .replace(/(- Link$|\[Link\]\()/g, '')
+              .replace(/https?:\/\/[^\s\]]+/g, url => `<a href="${url}" target="_blank" class="bot-link">Link</a>`)
+              .replace(/(\n|^)[\s\u200B\u00A0]*-\s+/g, '$1• ')
+              .replace(/\n/g, '<br>')
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              .replace(/• LINK_PLACEHOLDER/g, (_, index, fullText) => {
+                const productName = fullText.match(/<strong>(.*?)<\/strong>/)?.[1] || "Product";
+                return `• <a href="#" class="product-link">View ${productName}</a>`;
+              })
+              .replace(/[>\])]+botresponse/g, '');
+            return botResponseText;
+          } catch (error) {
+            console.error("Error in generateBotResponse:", error);
+            return `Sorry, there was an error: ${error.message}`;
           }
-        },
-      });
-      document.querySelector(".chat-form").appendChild(picker);
-    }
-  });
-})();
+        };
+
+        const resetChatHistory = async () => {
+          const chatBody = document.querySelector(".chat-body");
+          if (!chatBody) return;
+
+          const userConfirmed = confirm("Are you sure you want to reset the chat? This will delete all previous messages and show the welcome message again.");
+          if (!userConfirmed) return;
+
+          chatBody.innerHTML = "";
+          await deleteChatHistory();
+          localStorage.removeItem('welcomeShown'); // Reset welcome flag
+          loadChatHistory(); // Reload to show welcome message
+        };
+
+        const deleteChatHistory = async () => {
+          try {
+            const chatRef = collection(db, "chats");
+            const q = query(chatRef, where("browserId", "==", currentBrowserId));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (doc) => {
+              await deleteDoc(doc.ref);
+            });
+            console.log("Chat history deleted from Firestore successfully.");
+          } catch (error) {
+            console.error("Error deleting chat history from Firestore:", error);
+          }
+        };
+
+        sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
+        messageInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (messageInput.value.trim() !== "") {
+              handleOutgoingMessage(e);
+            }
+          }
+        });
+        document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", () => {
+          const file = fileInput.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            fileInput.value = "";
+            let imgElement = fileUploadWrapper.querySelector("img");
+            if (!imgElement) {
+              imgElement = document.createElement("img");
+              fileUploadWrapper.appendChild(imgElement);
+            }
+            imgElement.src = e.target.result;
+            fileUploadWrapper.classList.add("file-uploaded");
+          };
+          reader.readAsDataURL(file);
+          userData.file = file;
+        });
+        fileCancelButton.addEventListener("click", () => {
+          userData.file = null;
+          fileUploadWrapper.classList.remove("file-uploaded");
+        });
+        closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
+        chatbotToggler.addEventListener("click", async () => {
+          document.body.classList.toggle("show-chatbot");
+          if (document.body.classList.contains("show-chatbot")) {
+            document.getElementById("chat-interface").style.display = "block";
+            loadChatHistory();
+          }
+        });
+        document.getElementById("resetChatHistory").addEventListener("click", resetChatHistory);
+
+        const picker = new EmojiMart.Picker({
+          theme: "light",
+          skinTonePosition: "none",
+          previewPosition: "none",
+          onEmojiSelect: (emoji) => {
+            const { selectionStart: start, selectionEnd: end } = messageInput;
+            messageInput.setRangeText(emoji.native, start, end, "end");
+            messageInput.focus();
+          },
+          onClickOutside: (e) => {
+            if (e.target.id === "emoji-picker") {
+              document.body.classList.toggle("show-emoji-picker");
+            } else {
+              document.body.classList.remove("show-emoji-picker");
+            }
+          },
+        });
+        document.querySelector(".chat-form").appendChild(picker);
+      }
+    });
+  })();

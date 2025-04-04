@@ -1,113 +1,713 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vosk Speech Recognition</title>
-  <script type="application/javascript" src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.5/dist/vosk.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Navigation Problem Solver</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .solution-card {
+            display: none;
+        }
+        .map-container {
+            height: 500px;
+            margin: 20px 0;
+        }
+        .question-text {
+            white-space: pre-line;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .result-value {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .navbar {
+            margin-bottom: 30px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn-calculate {
+            margin-top: 15px;
+        }
+        .result-alert {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <script>
-    async function init() {
-      try {
-        // Load the Vosk model
-        const model = await Vosk.createModel('https://your-server.com/path/to/model.tar.gz');
-        console.log('Model loaded:', model);
-
-        // Create a recognizer
-        const recognizer = new model.KaldiRecognizer();
-        recognizer.on("result", (message) => {
-            console.log(`Result: ${message.result.text}`);
-        });
-        recognizer.on("partialresult", (message) => {
-            console.log(`Partial result: ${message.result.partial}`);
-        });
-
-        // Request microphone access
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: false,
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                channelCount: 1,
-                sampleRate: 16000
-            },
-        });
-        console.log('Media stream obtained:', mediaStream);
-
-        // Set up audio processing
-        const audioContext = new AudioContext();
-        const recognizerNode = audioContext.createScriptProcessor(4096, 1, 1);
-        recognizerNode.onaudioprocess = (event) => {
-            try {
-                recognizer.acceptWaveform(event.inputBuffer);
-            } catch (error) {
-                console.error('acceptWaveform failed', error);
-            }
-        };
-        const source = audioContext.createMediaStreamSource(mediaStream);
-        source.connect(recognizerNode);
-      } catch (error) {
-        console.error('Initialization failed', error);
-        alert('An error occurred. Please check the console for details.');
-      }
-    }
-
-    window.onload = init;
-
-    const showWelcomeMessage2 = (chatBody) => {
-      const welcomeMessage = `
-        <div class="bot-avatar-wrapper">
-          <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-          <span class="online-indicator"></span>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Flight Navigation Problem Solver</a>
         </div>
-       <div class="message-content">
-    <h3 class="welcome-heading">Welcome to Health Assistant</h3>
-    <p class="welcome-text">I'm here to provide personalized health guidance. Would you like to upload your health reports for more accurate recommendations?</p>
-    
-    <div class="welcome-options">
-      <div class="file-upload-wrapper">
-        <input type="file" accept="image/*,application/pdf" id="welcome-file-input" hidden />
-        <button type="button" id="welcome-file-upload-btn" class="primary-button">
-          <i class="upload-icon"></i> Upload 
-        </button>
-      </div>
-      
-      <div class="quick-replies">
-        <button class="secondary-button" onclick="sendQuickReply('Continue ')">Continue </button>
-        
-      </div>
-    </div>
-  </div>`;
-  const welcomeMessageDiv = createMessageElement(welcomeMessage, "bot-message");
-        chatBody.appendChild(welcomeMessageDiv);
+    </nav>
 
-        const fileInput = welcomeMessageDiv.querySelector("#welcome-file-input");
-        const fileUploadBtn = welcomeMessageDiv.querySelector("#welcome-file-upload-btn");
-
-        fileUploadBtn.addEventListener("click", () => fileInput.click());
-        
-        fileInput.addEventListener("change", () => {
-          const file = fileInput.files[0];
-          if (!file) return;
-
-          userData.file = file;
-
-          const fileConfirmation = `
-            <div class="bot-avatar-wrapper">
-              <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-              <span class="online-indicator"></span>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Flight Navigation Question</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-outline-primary" id="generateQuestion">Generate New Question</button>
+                        </div>
+                        <div class="question-text" id="questionText">Click "Generate New Question" to start.</div>
+                        
+                        <div class="loading" id="loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Calculating solution...</p>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button class="btn btn-primary btn-calculate" id="calculateSolution">Calculate Solution</button>
+                            <button class="btn btn-success" id="showSolution" style="display: none;">View Solution</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card solution-card" id="solutionCard">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Flight Navigation Solution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success result-alert" id="resultAlert" role="alert">
+                            <h4 class="alert-heading">Critical Point (CP) Location:</h4>
+                            <p class="mb-0">The critical point is located <span id="cpDistanceResult" class="result-value">0</span> NM from the departure airport.</p>
+                        </div>
+                        
+                        <h5 class="card-title">Flight Details:</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th>Departure Airport:</th>
+                                            <td><span id="departureAirport"></span> (<span id="departureCode"></span>)</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Destination Airport:</th>
+                                            <td><span id="arrivalAirport"></span> (<span id="arrivalCode"></span>)</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Flight Level:</th>
+                                            <td>FL<span id="cruiseLevel"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Normal TAS:</th>
+                                            <td><span id="tasNormal"></span> kt</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Single Engine TAS:</th>
+                                            <td><span id="tasSingleEngine"></span> kt</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th>Normal Wind Vector:</th>
+                                            <td><span id="windNormalDir"></span>M / <span id="windNormalSpeed"></span> kt</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Single Engine Wind Vector:</th>
+                                            <td><span id="windSingleDir"></span>M / <span id="windSingleSpeed"></span> kt</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total Distance:</th>
+                                            <td><span id="totalDistance"></span> NM</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Wind Correction:</th>
+                                            <td><span id="windCorrection"></span> NM</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Critical Point:</th>
+                                            <td><span id="criticalPoint"></span> NM</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <h5 class="card-title mt-4">Route Map:</h5>
+                        <div id="mapContainer" class="map-container"></div>
+                        
+                        <h5 class="card-title mt-4">Calculation Steps:</h5>
+                        <div class="accordion" id="calculationSteps">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="stepOne">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        Step 1: Calculate Track and Distance
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="stepOne">
+                                    <div class="accordion-body">
+                                        <p>The Great Circle track between <span id="departureAirport2"></span> and <span id="arrivalAirport2"></span> was calculated.</p>
+                                        <p>Total distance: <span id="totalDistance2" class="result-value"></span> NM</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="stepTwo">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                        Step 2: Calculate Wind Components
+                                    </button>
+                                </h2>
+                                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="stepTwo">
+                                    <div class="accordion-body">
+                                        <p>Normal operations: Wind <span id="windNormalDir2"></span>M / <span id="windNormalSpeed2"></span> kt</p>
+                                        <p>Single engine operations: Wind <span id="windSingleDir2"></span>M / <span id="windSingleSpeed2"></span> kt</p>
+                                        <p>Wind correction factor: <span id="windCorrection2" class="result-value"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="stepThree">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                        Step 3: Critical Point Calculation
+                                    </button>
+                                </h2>
+                                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="stepThree">
+                                    <div class="accordion-body">
+                                        <p>The critical point is calculated using the formula:</p>
+                                        <p>CP = (D × GS₁) ÷ (GS₁ + GS₂)</p>
+                                        <p>Where:</p>
+                                        <ul>
+                                            <li>D = Total distance (<span id="totalDistance3"></span> NM)</li>
+                                            <li>GS₁ = Normal ground speed (<span id="groundSpeedNormal"></span> kt)</li>
+                                            <li>GS₂ = Single engine ground speed (<span id="groundSpeedSingle"></span> kt)</li>
+                                        </ul>
+                                        <p>With wind correction applied: <span id="criticalPoint2" class="result-value"></span> NM</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="message-text">
-              File "${file.name}" uploaded successfully. Please tell me about your health concern or type "Continue" to proceed.
-            </div>`;
-          const confirmationDiv = createMessageElement(fileConfirmation, "bot-message");
-          chatBody.appendChild(confirmationDiv);
-          chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+        </div>
+    </div>
 
-          fileInput.value = "";
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script>
+        // Current question data
+        let currentQuestion = null;
+        
+        // Generate a new question
+        $("#generateQuestion").click(function() {
+            $("#loading").show();
+            $("#showSolution").hide();
+            $("#solutionCard").hide();
+            
+            // Simulate API call to generate question (would connect to your first Flask app)
+            setTimeout(function() {
+                // This would be replaced with actual API call
+                generateMockQuestion();
+                $("#loading").hide();
+            }, 1000);
         });
-      };
-  </script>
+        
+        // Calculate solution
+        $("#calculateSolution").click(function() {
+            if (!currentQuestion) {
+                alert("Please generate a question first!");
+                return;
+            }
+            
+            $("#loading").show();
+            
+            // Simulate API call to calculate solution (would connect to your second Flask app)
+            setTimeout(function() {
+                calculateMockSolution();
+                $("#loading").hide();
+                $("#showSolution").show();
+            }, 2000);
+        });
+        
+        // Show solution
+        $("#showSolution").click(function() {
+            $("#solutionCard").slideDown();
+            $("#resultAlert").fadeIn();
+            scrollToElement("#solutionCard");
+        });
+        
+        // Helper to scroll to element
+        function scrollToElement(selector) {
+            $('html, body').animate({
+                scrollTop: $(selector).offset().top - 20
+            }, 500);
+        }
+        
+        // Mock function to generate a question (this would call your first Flask app API)
+        function generateMockQuestion() {
+            // Random airports from your list
+            self.airports = [
+             {"code": "ABG", "name": "Abingdon Airport", "lat": -17.6166992, "long": 143.1670074},
+    {"code": "ADL", "name": "Adelaide International Airport", "lat": -34.9385852, "long": 138.5374124},
+    {"code": "AGW", "name": "Agnew Airport", "lat": -12.1451076, "long": 142.1491007},
+    {"code": "WSY", "name": "Whitsunday Airstrip Airport", "lat": -20.2687204, "long": 148.7184564},
+    {"code": "ALH", "name": "Albany Airport", "lat": -34.9448809, "long": 117.8042407},
+    {"code": "ABX", "name": "Albury Airport", "lat": -36.0693691, "long": 146.9545361},
+    {"code": "AXL", "name": "Alexandria Airport", "lat": -19.0587589, "long": 136.7105012},
+    {"code": "ASP", "name": "Alice Springs Airport", "lat": -23.8017853, "long": 133.903112},
+    {"code": "ABH", "name": "Alpha Airport", "lat": -23.6493866, "long": 146.5845793},
+    {"code": "AYD", "name": "Alroy Downs Airport", "lat": -19.291052, "long": 136.0761812},
+    {"code": "AWN", "name": "Alton Downs Airport", "lat": -26.5333004, "long": 139.2669983},
+    {"code": "AMT", "name": "Amata Airport", "lat": -26.7729618, "long": 132.0187675},
+    {"code": "ABM", "name": "Northern Peninsula Airport", "lat": -10.9508, "long": 142.459},
+    {"code": "ALP", "name": "Alpha Airport", "lat": -23.6461, "long": 146.584},
+    {"code": "ARM", "name": "Armidale Airport", "lat": -30.5281, "long": 151.617},
+    {"code": "AUU", "name": "Aurukun Airport", "lat": -13.3539, "long": 141.7206},
+    {"code": "AYQ", "name": "Ayers Rock Airport", "lat": -25.1861, "long": 130.9756},
+    {"code": "BCI", "name": "Barcaldine Airport", "lat": -23.5653, "long": 145.3072},
+    {"code": "BHQ", "name": "Broken Hill Airport", "lat": -32.0014, "long": 141.4722},
+    {"code": "BME", "name": "Broome International Airport", "lat": -17.9447, "long": 122.232},
+    {"code": "BNE", "name": "Brisbane Airport", "lat": -27.383333, "long": 153.118332},
+    {"code": "BQL", "name": "Boulia Airport", "lat": -22.9133, "long": 139.899},
+    {"code": "BWT", "name": "Burnie Airport", "lat": -40.9989, "long": 145.7317},
+    {"code": "CFS", "name": "Coffs Harbour Airport", "lat": -30.3206, "long": 153.116},
+    {"code": "CMA", "name": "Cunnamulla Airport", "lat": -28.0308, "long": 145.621},
+    {"code": "CNJ", "name": "Cloncurry Airport", "lat": -20.6686, "long": 140.503},
+    {"code": "DBO", "name": "Dubbo City Regional Airport", "lat": -32.2167, "long": 148.574},
+    {"code": "DMD", "name": "Doomadgee Airport", "lat": -17.9403, "long": 138.822},
+    {"code": "DPO", "name": "Devonport Airport", "lat": -41.1697, "long": 146.429},
+    {"code": "DRW", "name": "Darwin International Airport", "lat": -12.4147, "long": 130.8767},
+    {"code": "DYL", "name": "Dysart Airport", "lat": -22.6222, "long": 148.363},
+    {"code": "EMD", "name": "Emerald Airport", "lat": -23.5675, "long": 148.179},
+    {"code": "FLS", "name": "Flinders Island Airport", "lat": -39.8853, "long": 147.726},
+    {"code": "GFF", "name": "Griffith Airport", "lat": -34.251, "long": 146.067},
+    {"code": "GLT", "name": "Gladstone Airport", "lat": -23.8697, "long": 151.223},
+    {"code": "GOV", "name": "Gove Airport", "lat": -12.2694, "long": 136.818},
+    {"code": "GTE", "name": "Groote Eylandt Airport", "lat": -13.975, "long": 136.460},
+    {"code": "HBA", "name": "Hobart International Airport", "lat": -42.837284, "long": 147.505005},
+    {"code": "HIS", "name": "Hayman Island Heliport", "lat": -20.0597, "long": 148.8806},
+    {"code": "HVB", "name": "Hervey Bay Airport", "lat": -25.3189, "long": 152.8806},
+    {"code": "ISA", "name": "Mount Isa Airport", "lat": -20.6639, "long": 139.488},
+    {"code": "KGI", "name": "Kalgoorlie-Boulder Airport", "lat": -30.7894, "long": 121.461},
+    {"code": "KNX", "name": "East Kimberley Regional Airport", "lat": -15.7781, "long": 128.707},
+    {"code": "LST", "name": "Launceston Airport", "lat": -41.545278, "long": 147.214167},
+    {"code": "MCY", "name": "Sunshine Coast Airport", "lat": -26.6033, "long": 153.091},
+    {"code": "MEL", "name": "Melbourne Airport", "lat": -37.6733, "long": 144.8433},
+    {"code": "MKY", "name": "Mackay Airport", "lat": -21.1717, "long": 149.18},
+    {"code": "MQL", "name": "Mildura Airport", "lat": -34.2292, "long": 142.085},
+    {"code": "NTL", "name": "Newcastle Airport", "lat": -32.7986, "long": 151.834},
+    {"code": "OLP", "name": "Olympic Dam Airport", "lat": -30.485, "long": 136.877},
+    {"code": "OOL", "name": "Gold Coast Airport", "lat": -28.1644, "long": 153.5053},
+    {"code": "PBO", "name": "Paraburdoo Airport", "lat": -23.1711, "long": 117.745},
+    {"code": "PER", "name": "Perth Airport", "lat": -31.9403, "long": 115.9669},
+    {"code": "PHE", "name": "Port Hedland International Airport", "lat": -20.3778, "long": 118.626},
+    {"code": "PLO", "name": "Port Lincoln Airport", "lat": -34.6053, "long": 135.8800},
+    {"code": "PPP", "name": "Proserpine Whitsunday Coast Airport", "lat": -20.495, "long": 148.552},
+    {"code": "ROK", "name": "Rockhampton Airport", "lat": -23.3819, "long": 150.475},
+    {"code": "SYD", "name": "Sydney Kingsford Smith Airport", "lat": -33.9461, "long": 151.1772},
+    {"code": "TMW", "name": "Tamworth Airport", "lat": -31.0839, "long": 150.847},
+    {"code": "TSV", "name": "Townsville Airport", "lat": -19.2525, "long": 146.764},
+    {"code": "WEI", "name": "Weipa Airport", "lat": -12.6786, "long": 141.925},
+    {"code": "WGA", "name": "Wagga Wagga Airport", "lat": -35.1653, "long": 147.466},
+    {"code": "WKB", "name": "Warracknabeal Airport", "lat": -36.3211, "long": 142.419},
+    {"code": "WOL", "name": "Illawarra Regional Airport", "lat": -34.5611, "long": 150.789},
+    {"code": "XCH", "name": "Christmas Island Airport", "lat": -10.4506, "long": 105.690},
+    {"code": "ZNE", "name": "Newman Airport", "lat": -23.4178, "long": 119.803},
+      {"code": "ALH", "name": "Albany Airport", "lat": -34.9448809, "long": 117.8042407},
+    {"code": "ABX", "name": "Albury Airport", "lat": -36.0693691, "long": 146.9545361},
+    {"code": "ARM", "name": "Armidale Airport", "lat": -30.5281, "long": 151.617},
+    {"code": "AUU", "name": "Aurukun Airport", "lat": -13.3539, "long": 141.7206},
+    {"code": "AYQ", "name": "Ayers Rock Airport", "lat": -25.1861, "long": 130.9756},
+    {"code": "BDW", "name": "Bedford Downs Airport", "lat": -17.3989, "long": 127.7594},
+    {"code": "BFC", "name": "Bloomfield Airport", "lat": -15.9006, "long": 145.3397},
+    {"code": "BHS", "name": "Bathurst Airport", "lat": -33.4094, "long": 149.6522},
+    {"code": "BKQ", "name": "Blackall Airport", "lat": -24.4278, "long": 145.428},
+    {"code": "BRK", "name": "Bourke Airport", "lat": -30.0392, "long": 145.952},
+    {"code": "BVI", "name": "Birdsville Airport", "lat": -25.8975, "long": 139.348},
+    {"code": "CMA", "name": "Cunnamulla Airport", "lat": -28.0308, "long": 145.621},
+    {"code": "CNJ", "name": "Cloncurry Airport", "lat": -20.6686, "long": 140.503},
+    {"code": "COJ", "name": "Coonabarabran Airport", "lat": -31.3325, "long": 149.267},
+    {"code": "CRB", "name": "Collarenebri Airport", "lat": -29.5019, "long": 148.579},
+    {"code": "CVQ", "name": "Carnarvon Airport", "lat": -24.8800, "long": 113.671},
+    {"code": "FIZ", "name": "Fitzroy Crossing Airport", "lat": -18.1819, "long": 125.558},
+    {"code": "GTE", "name": "Groote Eylandt Airport", "lat": -13.975, "long": 136.460},
+    {"code": "JCK", "name": "Julia Creek Airport", "lat": -20.6683, "long": 141.723},
+    {"code": "KPP", "name": "Kalpowar Airport", "lat": -14.9483, "long": 144.4467},
+    ]
+
+    const dep = airports[Math.floor(Math.random() * 2)];
+            const arr = airports[2 + Math.floor(Math.random() * 3)];
+            const eland=airports[Math.floor(Math.random() * 4)];
+            const eland2= airports[ 2 + Math.floor(Math.random() * 5)];  
+            // Other random values
+            const cruise_level = [150, 170, 190, 210, 230][Math.floor(Math.random() * 5)];
+            const tas_normal = (240 + Math.random() * 10).toFixed(1);
+            const tas_single_engine = (180 + Math.random() * 20).toFixed(1);
+            const wind_dir_normal = Math.floor(320 + Math.random() * 30);
+            const wind_speed_normal = Math.floor(50 + Math.random() * 20);
+            const wind_dir_single = Math.floor(320 + Math.random() * 30);
+            const wind_speed_single = Math.floor(50 + Math.random() * 20);
+            
+            // Build question text
+            const questionText = `Q26 Refer ERC L7 . You are planning a flight from ${dep.name} to ${arr.name} direct ( draw the track ) at FL${cruise_level} with a TAS of ${tas_normal} kt for normal operations and single engine TAS of ${tas_single_engine} kt . 
+WV ${wind_dir_normal}M / ${wind_speed_normal} kt at FL${cruise_level} ( normal ops crz ) , 
+WV ${wind_dir_single}M / ${wind_speed_single} kt for single engine cruise level . 
+The position of the Critical Point for  ${eland.name}  and ${eland2.name}
+Your calculation of the location of the single engine CP ( Critical Point ) for ${arr.name} and ${dep.name} , on the ${dep.code} - ${arr.code} track , measured as a distance from ${dep.name} is -`;
+             // Store current question data
+            currentQuestion = {
+                question: questionText,
+                details: {
+                    departure: dep,
+                    arrival: arr,
+                    land1:eland,
+                    land2:eland2,
+                    cruise_level: cruise_level,
+                    tas_normal: tas_normal,
+                    tas_single_engine: tas_single_engine,
+                    wind_normal: {
+                        direction: wind_dir_normal,
+                        speed: wind_speed_normal
+                    },
+                    wind_single_engine: {
+                        direction: wind_dir_single,
+                        speed: wind_speed_single
+                    }
+                }
+            };
+            
+            // Update the question display
+            $("#questionText").text(questionText);
+        }
+        
+        // Mock function to calculate solution (this would call your second Flask app)
+        function calculateCriticalPoint(question) {
+    const loading = $("#loading");
+    loading.show();
+    
+    // Extract coordinates from airports
+    const dep = question.details.departure;
+    const arr = question.details.arrival;
+    const arr1=question.details.land1;
+    const arr2=question.details.land2;
+    // Prepare data for API request
+    const apiData = {
+        // P1 and P2 define the flight path
+        "P1_lat": dep.lat,
+        "P1_lon": dep.long,
+        "P2_lat": arr.lat,
+        "P2_lon": arr.long,
+        // P3 and P4 define a line perpendicular to the flight path
+        // For simplicity, we'll use positions slightly offset from the midpoint
+        "P3_lat": arr1.lat,
+        "P3_lon": arr1.long,
+        "P4_lat": arr2.lat,
+        "P4_lon": arr2.long,
+        // Flight parameters
+        "TAS": parseFloat(question.details.tas_normal),
+        "wind_speed": question.details.wind_normal.speed,
+        "degree": question.details.wind_normal.direction,
+        "include_map": true
+    };
+    console.log(apiData)
+    // Make API call to the Flask backend
+    return $.ajax({
+        url: 'http://127.0.0.1:5000/api/calculate',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(apiData),
+        dataType: 'json'
+    })
+    .done(function(response) {
+        if (response.status === 'success') {
+            const results = response.results;
+            console.log(results)
+            // Calculate the critical point
+            // Using formula: CP = (D × GS₁) ÷ (GS₁ + GS₂)
+            const totalDistance = results.distance_to_P1_nm;
+            const groundSpeedNormal = parseFloat(question.details.tas_normal) - (Math.cos((question.details.wind_normal.direction - getTrackAngle(dep, arr)) * Math.PI / 180) * question.details.wind_normal.speed);
+            const groundSpeedSingle = parseFloat(question.details.tas_single_engine) - (Math.cos((question.details.wind_single_engine.direction - getTrackAngle(dep, arr)) * Math.PI / 180) * question.details.wind_single_engine.speed);
+            
+            const criticalPoint = (totalDistance * groundSpeedNormal) / (groundSpeedNormal + groundSpeedSingle);
+            const windCorrection = results.distance_to_degree;
+            
+            // Update UI with calculated results
+            updateSolutionUI(question, {
+                totalDistance: totalDistance.toFixed(1),
+                groundSpeedNormal: groundSpeedNormal.toFixed(1),
+                groundSpeedSingle: groundSpeedSingle.toFixed(1),
+                criticalPoint: criticalPoint.toFixed(1),
+                windCorrection: windCorrection.toFixed(1),
+                mapHtml: results.map_html
+            });
+            
+            // Show solution button
+            $("#showSolution").show();
+        } else {
+            alert("Calculation error: " + response.message);
+        }
+        loading.hide();
+    })
+    .fail(function(xhr, status, error) {
+        console.error("API call failed:", error);
+        alert("Failed to calculate critical point. Please try again.");
+        loading.hide();
+    });
+}
+
+// Helper function to calculate the track angle between two points
+function getTrackAngle(point1, point2) {
+    // Convert latitude and longitude from degrees to radians
+    const lat1 = point1.lat * Math.PI / 180;
+    const lon1 = point1.long * Math.PI / 180;
+    const lat2 = point2.lat * Math.PI / 180;
+    const lon2 = point2.long * Math.PI / 180;
+    
+    // Calculate track angle
+    const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+    let bearing = Math.atan2(y, x) * 180 / Math.PI;
+    
+    // Convert to positive degrees
+    bearing = (bearing + 360) % 360;
+    
+    return bearing;
+}
+
+// Function to update the solution UI with calculated values
+function updateSolutionUI(question, results) {
+    const dep = question.details.departure;
+    const arr = question.details.arrival;
+    
+    // Update basic flight details
+    $("#departureAirport, #departureAirport2").text(dep.name);
+    $("#departureCode").text(dep.code);
+    $("#arrivalAirport, #arrivalAirport2").text(arr.name);
+    $("#arrivalCode").text(arr.code);
+    $("#cruiseLevel").text(question.details.cruise_level);
+    $("#tasNormal").text(question.details.tas_normal);
+    $("#tasSingleEngine").text(question.details.tas_single_engine);
+    $("#windNormalDir, #windNormalDir2").text(question.details.wind_normal.direction);
+    $("#windNormalSpeed, #windNormalSpeed2").text(question.details.wind_normal.speed);
+    $("#windSingleDir, #windSingleDir2").text(question.details.wind_single_engine.direction);
+    $("#windSingleSpeed, #windSingleSpeed2").text(question.details.wind_single_engine.speed);
+    
+    // Update calculated results
+    $("#totalDistance, #totalDistance2, #totalDistance3").text(results.totalDistance);
+    $("#windCorrection, #windCorrection2").text(results.windCorrection);
+    $("#groundSpeedNormal").text(results.groundSpeedNormal);
+    $("#groundSpeedSingle").text(results.groundSpeedSingle);
+    $("#criticalPoint, #criticalPoint2, #cpDistanceResult").text(results.criticalPoint);
+    
+    // Update map if available
+    if (results.mapHtml) {
+        $("#mapContainer").html(results.mapHtml);
+    } else {
+        // Fallback to mock map
+        let mapHtml = `<div style="background-color: #e9ecef; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;">
+            <div>
+                <h4>Flight Route Map</h4>
+                <p>(${dep.code} to ${arr.code})</p>
+                <p>Map visualization is not available.</p>
+            </div>
+        </div>`;
+        $("#mapContainer").html(mapHtml);
+    }
+}
+
+// Replace the mock calculation with the API-based calculation
+$("#calculateSolution").click(function() {
+    if (!currentQuestion) {
+        alert("Please generate a question first!");
+        return;
+    }
+    
+    calculateCriticalPoint(currentQuestion);
+});
+
+// Enhance the question generation with more realistic parameters
+function generateQuestion() {
+    // Random airports from the list
+    self.airports = [
+             {"code": "ABG", "name": "Abingdon Airport", "lat": -17.6166992, "long": 143.1670074},
+    {"code": "ADL", "name": "Adelaide International Airport", "lat": -34.9385852, "long": 138.5374124},
+    {"code": "AGW", "name": "Agnew Airport", "lat": -12.1451076, "long": 142.1491007},
+    {"code": "WSY", "name": "Whitsunday Airstrip Airport", "lat": -20.2687204, "long": 148.7184564},
+    {"code": "ALH", "name": "Albany Airport", "lat": -34.9448809, "long": 117.8042407},
+    {"code": "ABX", "name": "Albury Airport", "lat": -36.0693691, "long": 146.9545361},
+    {"code": "AXL", "name": "Alexandria Airport", "lat": -19.0587589, "long": 136.7105012},
+    {"code": "ASP", "name": "Alice Springs Airport", "lat": -23.8017853, "long": 133.903112},
+    {"code": "ABH", "name": "Alpha Airport", "lat": -23.6493866, "long": 146.5845793},
+    {"code": "AYD", "name": "Alroy Downs Airport", "lat": -19.291052, "long": 136.0761812},
+    {"code": "AWN", "name": "Alton Downs Airport", "lat": -26.5333004, "long": 139.2669983},
+    {"code": "AMT", "name": "Amata Airport", "lat": -26.7729618, "long": 132.0187675},
+    {"code": "ABM", "name": "Northern Peninsula Airport", "lat": -10.9508, "long": 142.459},
+    {"code": "ALP", "name": "Alpha Airport", "lat": -23.6461, "long": 146.584},
+    {"code": "ARM", "name": "Armidale Airport", "lat": -30.5281, "long": 151.617},
+    {"code": "AUU", "name": "Aurukun Airport", "lat": -13.3539, "long": 141.7206},
+    {"code": "AYQ", "name": "Ayers Rock Airport", "lat": -25.1861, "long": 130.9756},
+    {"code": "BCI", "name": "Barcaldine Airport", "lat": -23.5653, "long": 145.3072},
+    {"code": "BHQ", "name": "Broken Hill Airport", "lat": -32.0014, "long": 141.4722},
+    {"code": "BME", "name": "Broome International Airport", "lat": -17.9447, "long": 122.232},
+    {"code": "BNE", "name": "Brisbane Airport", "lat": -27.383333, "long": 153.118332},
+    {"code": "BQL", "name": "Boulia Airport", "lat": -22.9133, "long": 139.899},
+    {"code": "BWT", "name": "Burnie Airport", "lat": -40.9989, "long": 145.7317},
+    {"code": "CFS", "name": "Coffs Harbour Airport", "lat": -30.3206, "long": 153.116},
+    {"code": "CMA", "name": "Cunnamulla Airport", "lat": -28.0308, "long": 145.621},
+    {"code": "CNJ", "name": "Cloncurry Airport", "lat": -20.6686, "long": 140.503},
+    {"code": "DBO", "name": "Dubbo City Regional Airport", "lat": -32.2167, "long": 148.574},
+    {"code": "DMD", "name": "Doomadgee Airport", "lat": -17.9403, "long": 138.822},
+    {"code": "DPO", "name": "Devonport Airport", "lat": -41.1697, "long": 146.429},
+    {"code": "DRW", "name": "Darwin International Airport", "lat": -12.4147, "long": 130.8767},
+    {"code": "DYL", "name": "Dysart Airport", "lat": -22.6222, "long": 148.363},
+    {"code": "EMD", "name": "Emerald Airport", "lat": -23.5675, "long": 148.179},
+    {"code": "FLS", "name": "Flinders Island Airport", "lat": -39.8853, "long": 147.726},
+    {"code": "GFF", "name": "Griffith Airport", "lat": -34.251, "long": 146.067},
+    {"code": "GLT", "name": "Gladstone Airport", "lat": -23.8697, "long": 151.223},
+    {"code": "GOV", "name": "Gove Airport", "lat": -12.2694, "long": 136.818},
+    {"code": "GTE", "name": "Groote Eylandt Airport", "lat": -13.975, "long": 136.460},
+    {"code": "HBA", "name": "Hobart International Airport", "lat": -42.837284, "long": 147.505005},
+    {"code": "HIS", "name": "Hayman Island Heliport", "lat": -20.0597, "long": 148.8806},
+    {"code": "HVB", "name": "Hervey Bay Airport", "lat": -25.3189, "long": 152.8806},
+    {"code": "ISA", "name": "Mount Isa Airport", "lat": -20.6639, "long": 139.488},
+    {"code": "KGI", "name": "Kalgoorlie-Boulder Airport", "lat": -30.7894, "long": 121.461},
+    {"code": "KNX", "name": "East Kimberley Regional Airport", "lat": -15.7781, "long": 128.707},
+    {"code": "LST", "name": "Launceston Airport", "lat": -41.545278, "long": 147.214167},
+    {"code": "MCY", "name": "Sunshine Coast Airport", "lat": -26.6033, "long": 153.091},
+    {"code": "MEL", "name": "Melbourne Airport", "lat": -37.6733, "long": 144.8433},
+    {"code": "MKY", "name": "Mackay Airport", "lat": -21.1717, "long": 149.18},
+    {"code": "MQL", "name": "Mildura Airport", "lat": -34.2292, "long": 142.085},
+    {"code": "NTL", "name": "Newcastle Airport", "lat": -32.7986, "long": 151.834},
+    {"code": "OLP", "name": "Olympic Dam Airport", "lat": -30.485, "long": 136.877},
+    {"code": "OOL", "name": "Gold Coast Airport", "lat": -28.1644, "long": 153.5053},
+    {"code": "PBO", "name": "Paraburdoo Airport", "lat": -23.1711, "long": 117.745},
+    {"code": "PER", "name": "Perth Airport", "lat": -31.9403, "long": 115.9669},
+    {"code": "PHE", "name": "Port Hedland International Airport", "lat": -20.3778, "long": 118.626},
+    {"code": "PLO", "name": "Port Lincoln Airport", "lat": -34.6053, "long": 135.8800},
+    {"code": "PPP", "name": "Proserpine Whitsunday Coast Airport", "lat": -20.495, "long": 148.552},
+    {"code": "ROK", "name": "Rockhampton Airport", "lat": -23.3819, "long": 150.475},
+    {"code": "SYD", "name": "Sydney Kingsford Smith Airport", "lat": -33.9461, "long": 151.1772},
+    {"code": "TMW", "name": "Tamworth Airport", "lat": -31.0839, "long": 150.847},
+    {"code": "TSV", "name": "Townsville Airport", "lat": -19.2525, "long": 146.764},
+    {"code": "WEI", "name": "Weipa Airport", "lat": -12.6786, "long": 141.925},
+    {"code": "WGA", "name": "Wagga Wagga Airport", "lat": -35.1653, "long": 147.466},
+    {"code": "WKB", "name": "Warracknabeal Airport", "lat": -36.3211, "long": 142.419},
+    {"code": "WOL", "name": "Illawarra Regional Airport", "lat": -34.5611, "long": 150.789},
+    {"code": "XCH", "name": "Christmas Island Airport", "lat": -10.4506, "long": 105.690},
+    {"code": "ZNE", "name": "Newman Airport", "lat": -23.4178, "long": 119.803},
+      {"code": "ALH", "name": "Albany Airport", "lat": -34.9448809, "long": 117.8042407},
+    {"code": "ABX", "name": "Albury Airport", "lat": -36.0693691, "long": 146.9545361},
+    {"code": "ARM", "name": "Armidale Airport", "lat": -30.5281, "long": 151.617},
+    {"code": "AUU", "name": "Aurukun Airport", "lat": -13.3539, "long": 141.7206},
+    {"code": "AYQ", "name": "Ayers Rock Airport", "lat": -25.1861, "long": 130.9756},
+    {"code": "BDW", "name": "Bedford Downs Airport", "lat": -17.3989, "long": 127.7594},
+    {"code": "BFC", "name": "Bloomfield Airport", "lat": -15.9006, "long": 145.3397},
+    {"code": "BHS", "name": "Bathurst Airport", "lat": -33.4094, "long": 149.6522},
+    {"code": "BKQ", "name": "Blackall Airport", "lat": -24.4278, "long": 145.428},
+    {"code": "BRK", "name": "Bourke Airport", "lat": -30.0392, "long": 145.952},
+    {"code": "BVI", "name": "Birdsville Airport", "lat": -25.8975, "long": 139.348},
+    {"code": "CMA", "name": "Cunnamulla Airport", "lat": -28.0308, "long": 145.621},
+    {"code": "CNJ", "name": "Cloncurry Airport", "lat": -20.6686, "long": 140.503},
+    {"code": "COJ", "name": "Coonabarabran Airport", "lat": -31.3325, "long": 149.267},
+    {"code": "CRB", "name": "Collarenebri Airport", "lat": -29.5019, "long": 148.579},
+    {"code": "CVQ", "name": "Carnarvon Airport", "lat": -24.8800, "long": 113.671},
+    {"code": "FIZ", "name": "Fitzroy Crossing Airport", "lat": -18.1819, "long": 125.558},
+    {"code": "GTE", "name": "Groote Eylandt Airport", "lat": -13.975, "long": 136.460},
+    {"code": "JCK", "name": "Julia Creek Airport", "lat": -20.6683, "long": 141.723},
+    {"code": "KPP", "name": "Kalpowar Airport", "lat": -14.9483, "long": 144.4467},
+    ]
+    
+    const depIndex = Math.floor(Math.random() * 2);
+    const arrIndex = 2 + Math.floor(Math.random() * 3);
+    const tepIndex = Math.floor(Math.random() * 4);
+    const nrrIndex = 2 + Math.floor(Math.random() * 10);
+    
+    const dep = airports[depIndex];
+    const arr = airports[arrIndex];
+    const eland=airports[tepIndex];
+    const eland2=airports[nrrIndex];
+
+    // Flight parameters
+    const cruise_level = [150, 170, 190, 210, 230][Math.floor(Math.random() * 5)];
+    const tas_normal = (240 + Math.random() * 10).toFixed(1);
+    const tas_single_engine = (180 + Math.random() * 20).toFixed(1);
+    
+    // Calculate a reasonable wind direction based on the flight path
+    const track = getTrackAngle(dep, arr);
+    const wind_dir_normal = Math.floor((track + 180 + (Math.random() - 0.5) * 60) % 360);
+    const wind_speed_normal = Math.floor(40 + Math.random() * 30);
+    const wind_dir_single = Math.floor((wind_dir_normal + (Math.random() - 0.5) * 20) % 360);
+    const wind_speed_single = Math.floor(wind_speed_normal * (0.8 + Math.random() * 0.4));
+    
+    // Build question text
+    const questionText = `Q26 Refer ERC L7 . You are planning a flight from ${dep.name} to ${arr.name} direct ( draw the track ) at FL${cruise_level} with a TAS of ${tas_normal} kt for normal operations and single engine TAS of ${tas_single_engine} kt . 
+WV ${wind_dir_normal}M / ${wind_speed_normal} kt at FL${cruise_level} ( normal ops crz ) , 
+WV ${wind_dir_single}M / ${wind_speed_single} kt for single engine cruise level . 
+The position of the Critical Point for  ${eland.name}  and ${eland.name}
+Your calculation of the location of the single engine CP ( Critical Point ) for ${arr.name} and ${dep.name} , on the ${dep.code} - ${arr.code} track , measured as a distance from ${dep.name} is -`;
+    
+    // Store current question data
+    currentQuestion = {
+                question: questionText,
+                details: {
+                    departure: dep,
+                    arrival: arr,
+                    land1:eland,
+                    land2:eland2,
+                    cruise_level: cruise_level,
+                    tas_normal: tas_normal,
+                    tas_single_engine: tas_single_engine,
+                    wind_normal: {
+                        direction: wind_dir_normal,
+                        speed: wind_speed_normal
+                    },
+                    wind_single_engine: {
+                        direction: wind_dir_single,
+                        speed: wind_speed_single
+                    }
+                }
+            };
+            
+    // Update the question display
+    $("#questionText").text(questionText);
+    $("#showSolution").hide();
+    $("#solutionCard").hide();
+    
+    return currentQuestion;
+}
+
+// Replace the mock question generator
+$("#generateQuestion").click(function() {
+    $("#loading").show();
+    $("#showSolution").hide();
+    $("#solutionCard").hide();
+    
+    setTimeout(function() {
+        generateQuestion();
+        $("#loading").hide();
+    }, 1000);
+});
+
+// Initialize with a welcome message
+$(document).ready(function() {
+    $("#questionText").html("Welcome to the Flight Navigation Problem Solver!<br><br>This tool helps you practice critical point calculations for flight navigation.<br><br>Click 'Generate New Question' to begin.");
+});
+    </script>
 </body>
 </html>

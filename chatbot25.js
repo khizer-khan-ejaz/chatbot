@@ -594,9 +594,7 @@ const handleOutgoingMessage = async (e) => {
           const browserIdString = String(currentBrowserId);
           const cacheKey = `${userMessage}_${file ? file.name : "no-file"}_${browserIdString}`;
           const cachedResponse = localStorage.getItem(cacheKey);
-          if (cachedResponse) {
-            return cachedResponse;
-          }
+      
 
           const formData = new FormData();
           formData.append("query", userMessage);

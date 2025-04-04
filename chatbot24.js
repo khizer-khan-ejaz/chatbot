@@ -701,7 +701,7 @@ const handleOutgoingMessage = async (e) => {
             formData.append("file", file, file.name);
           }
 
-          const apiResponse = await fetch("https://chatbot-mongo-db.vercel.app/chat", {
+          const apiResponse = await fetch("https://khadargroups-ai-chatbot.vercel.app/chat", {
             method: "POST",
             body: formData,
           });
