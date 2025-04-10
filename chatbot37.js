@@ -521,11 +521,19 @@ Promise.all([
     };
 
     // Modify your form submission handler in the loadChatHistory function
-    const loadChatHistory = async () => {
-        try {
+   const loadChatHistory = async () => {
+    try {
         console.log("Loading chat history with browserId:", currentBrowserId);
+        const userId = localStorage.getItem('userId');
         const chatRef = collection(db, "chats");
-        const q = query(chatRef, where("browserId", "==", currentBrowserId), orderBy("timestamp", "asc"));
+        let q;
+        if (userId) {
+            console.log("Querying with userId:", userId);
+            q = query(chatRef, where("userId", "==", userId), orderBy("timestamp", "asc"));
+        } else {
+            console.log("Querying with browserId:", currentBrowserId);
+            q = query(chatRef, where("browserId", "==", currentBrowserId), orderBy("timestamp", "asc"));
+        }
         const querySnapshot = await getDocs(q);
         console.log(`Found ${querySnapshot.size} messages in history`);
         
@@ -542,162 +550,139 @@ Promise.all([
         const userInfoSubmitted = await checkUserInfoSubmitted();
         console.log("User info submitted status:", userInfoSubmitted);
     
-        // Get message input element once
         const messageInput = document.querySelector(".message-input");
     
         if (!welcomeShown) {
             if (!userInfoSubmitted) {
-            console.log("Showing user info form");
-            const welcomeMessageDiv = createMessageElement(createUserInfoFormMessage(), "bot-message");
-            chatBody.appendChild(welcomeMessageDiv);
-            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-            
-            // Hide message input during registration
-            if (messageInput) messageInput.style.display = "none";
-            
-            // Wait for DOM to be updated before attaching event listener
-            setTimeout(() => {
-                const form = document.getElementById("user-info-submit");
-                if (form) {
-                console.log("Adding form submit listener");
-                // Remove any existing event listeners to prevent duplicates
-                const newForm = form.cloneNode(true);
-                form.parentNode.replaceChild(newForm, form);
+                console.log("Showing user info form");
+                const welcomeMessageDiv = createMessageElement(createUserInfoFormMessage(), "bot-message");
+                chatBody.appendChild(welcomeMessageDiv);
+                chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
                 
-                newForm.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    console.log("Form submitted");
-                    const name = document.getElementById("user-name").value.trim();
-                    const phone = document.getElementById("user-phone").value.trim();
-                    const age = document.getElementById("user-age").value.trim();
+                if (messageInput) messageInput.style.display = "none";
                 
-                    if (name && phone && age) {
-                        console.log("Storing user info:", name, phone, age);
-                        await storeUserInfo(name, phone, age);
+                setTimeout(() => {
+                    const form = document.getElementById("user-info-submit");
+                    if (form) {
+                        console.log("Adding form submit listener");
+                        const newForm = form.cloneNode(true);
+                        form.parentNode.replaceChild(newForm, form);
                         
-                        // Clear the chat body and show welcome message
-                        chatBody.innerHTML = "";
-                        await showWelcomeMessage(chatBody);
-                        
-                        // Show the message input after successful registration
-                        if (messageInput) messageInput.style.display = "block";
-                        
-                        // Mark chatbot as open/visible
-                        document.body.classList.add("show-chatbot");
-                        document.getElementById("chat-interface").style.display = "block";
-                        localStorage.setItem('chatbotOpen', 'true');
-                        localStorage.setItem('welcomeShown', 'true');
+                        newForm.addEventListener("submit", async (e) => {
+                            e.preventDefault();
+                            console.log("Form submitted");
+                            const name = document.getElementById("user-name").value.trim();
+                            const phone = document.getElementById("user-phone").value.trim();
+                            const age = document.getElementById("user-age").value.trim();
+                            
+                            if (name && phone && age) {
+                                console.log("Storing user info:", name, phone, age);
+                                const { userId, isNewUser } = await storeUserInfo(name, phone, age);
+                                
+                                chatBody.innerHTML = "";
+                                if (isNewUser) {
+                                    console.log("New user: showing welcome message");
+                                    await showWelcomeMessage(chatBody);
+                                    localStorage.setItem('welcomeShown', 'true');
+                                } else {
+                                    console.log("Existing user: loading chat history");
+                                    await loadChatHistory(); // Reload with userId
+                                }
+                                
+                                if (messageInput) messageInput.style.display = "block";
+                                document.body.classList.add("show-chatbot");
+                                document.getElementById("chat-interface").style.display = "block";
+                                localStorage.setItem('chatbotOpen', 'true');
+                            }
+                        });
+                    } else {
+                        console.error("User info form not found in DOM");
                     }
-                });
-                } else {
-                console.error("User info form not found in DOM");
-                }
-            }, 100);
+                }, 100);
             } else {
-            console.log("Showing welcome message");
-            await showWelcomeMessage(chatBody);
-            
-            // Ensure message input is visible if already registered
-            if (messageInput) messageInput.style.display = "block";
-            
-            // Mark chatbot as open/visible
-            document.body.classList.add("show-chatbot");
-            document.getElementById("chat-interface").style.display = "block";
-            localStorage.setItem('chatbotOpen', 'true');
+                console.log("Showing welcome message");
+                await showWelcomeMessage(chatBody);
+                if (messageInput) messageInput.style.display = "block";
+                document.body.classList.add("show-chatbot");
+                document.getElementById("chat-interface").style.display = "block";
+                localStorage.setItem('chatbotOpen', 'true');
+                localStorage.setItem('welcomeShown', 'true');
             }
         } else {
             console.log("Loading chat history messages");
-            if (querySnapshot.size === 0) {
-            console.log("No messages found, showing welcome message instead");
-            // If we have no messages but welcomeShown is true, show welcome message again
-            localStorage.removeItem('welcomeShown');
-            await showWelcomeMessage(chatBody);
+            if (querySnapshot.size === 0 && !userId) {
+                console.log("No messages found, showing welcome message instead");
+                localStorage.removeItem('welcomeShown');
+                await showWelcomeMessage(chatBody);
             } else {
-            // Variable to check if we need to reattach upload buttons
-            let needsUploadButtons = false;
-            
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.sender === "user") {
-                const messageContent = `<div class="message-text">${data.message}</div>`;
-                chatBody.appendChild(createMessageElement(messageContent, "user-message"));
-                } else {
-                // Check if this message contains upload buttons
-                if (data.message.includes('upload-buttons-container')) {
-                    needsUploadButtons = true;
-                }
+                let needsUploadButtons = false;
                 
-                const messageContent = `
-                    <div class="bot-avatar-wrapper">
-                    <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
-                    <span class="online-indicator"></span>
-                    </div>
-                    <div class="message-text">${data.message}</div>`;
-                chatBody.appendChild(createMessageElement(messageContent, "bot-message"));
-                }
-            });
-            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-            
-            // If we detected upload buttons in the history, reattach event listeners
-            if (needsUploadButtons) {
-                setTimeout(() => {
-                const uploadBtn = document.getElementById('uploadFileBtn');
-                const skipBtn = document.getElementById('skipUploadBtn');
-                const browserIdString = String(currentBrowserId);
-                const pendingUploadKey = `pending_upload_${browserIdString}`;
-                
-                // Set the flag to indicate we're expecting an upload
-                localStorage.setItem(pendingUploadKey, 'true');
-                
-                if (uploadBtn) {
-                    uploadBtn.addEventListener('click', () => {
-                    // Create and trigger file input
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.style.display = 'none';
-                    document.body.appendChild(fileInput);
-                    
-                    fileInput.addEventListener('change', (e) => {
-                        if (e.target.files.length > 0) {
-                        // Handle the file upload with the message "this is the report"
-                        const selectedFile = e.target.files[0];
-                        // Call sendMessage function with the file and specific message
-                        sendMessage('this is the report', selectedFile);
-                        document.body.removeChild(fileInput);
-                        // Clear the pending upload flag
-                        localStorage.removeItem(pendingUploadKey);
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.sender === "user") {
+                        const messageContent = `<div class="message-text">${data.message}</div>`;
+                        chatBody.appendChild(createMessageElement(messageContent, "user-message"));
+                    } else {
+                        if (data.message.includes('upload-buttons-container')) {
+                            needsUploadButtons = true;
                         }
-                    });
-                    
-                    fileInput.click();
-                    });
-                }
+                        const messageContent = `
+                            <div class="bot-avatar-wrapper">
+                            <img class="bot-avatar" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Chatbot Logo" width="50" height="50">
+                            <span class="online-indicator"></span>
+                            </div>
+                            <div class="message-text">${data.message}</div>`;
+                        chatBody.appendChild(createMessageElement(messageContent, "bot-message"));
+                    }
+                });
+                chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
                 
-                if (skipBtn) {
-                    skipBtn.addEventListener('click', () => {
-                    // Send a skip message
-                    sendMessage('skip it');
-                    // Clear the pending upload flag
-                    localStorage.removeItem(pendingUploadKey);
-                    });
+                if (needsUploadButtons) {
+                    setTimeout(() => {
+                        const uploadBtn = document.getElementById('uploadFileBtn');
+                        const skipBtn = document.getElementById('skipUploadBtn');
+                        const browserIdString = String(currentBrowserId);
+                        const pendingUploadKey = `pending_upload_${browserIdString}`;
+                        localStorage.setItem(pendingUploadKey, 'true');
+                        
+                        if (uploadBtn) {
+                            uploadBtn.addEventListener('click', () => {
+                                const fileInput = document.createElement('input');
+                                fileInput.type = 'file';
+                                fileInput.style.display = 'none';
+                                document.body.appendChild(fileInput);
+                                
+                                fileInput.addEventListener('change', (e) => {
+                                    if (e.target.files.length > 0) {
+                                        const selectedFile = e.target.files[0];
+                                        sendMessage('this is the report', selectedFile);
+                                        document.body.removeChild(fileInput);
+                                        localStorage.removeItem(pendingUploadKey);
+                                    }
+                                });
+                                fileInput.click();
+                            });
+                        }
+                        
+                        if (skipBtn) {
+                            skipBtn.addEventListener('click', () => {
+                                sendMessage('skip ');
+                                localStorage.removeItem(pendingUploadKey);
+                            });
+                        }
+                    }, 300);
                 }
-                }, 300); // Slightly longer timeout to ensure DOM is fully loaded
-            }
             }
         }
-        } catch (error) {
+    } catch (error) {
         console.error("Error loading chat history:", error);
-        console.error("Error details:", error.message);
-        console.error("Error stack:", error.stack);
-        
-        // Attempt recovery by showing welcome message
         const chatBody = document.querySelector(".chat-body");
         if (chatBody) {
             chatBody.innerHTML = "";
             showWelcomeMessage(chatBody);
         }
-        }
-    };
+    }
+};
 // Update the storeUserInfo function to ensure we capture the user info correctly
 const storeUserInfo = async (name, phone, age) => {
 try {
@@ -812,7 +797,7 @@ const checkForPendingUploads = async () => {
         if (skipBtn) {
             skipBtn.addEventListener('click', () => {
             // Send a skip message
-            sendMessage1('skip it');
+            sendMessage1('skip ');
             // Clear the pending upload flag
             localStorage.removeItem(pendingUploadKey);
             });
@@ -1007,7 +992,7 @@ const generateBotResponse = async (incomingMessageDiv, query = null, file = null
         if (skipBtn) {
             skipBtn.addEventListener('click', () => {
             // Send a skip message
-            sendMessage1('skip it');
+            sendMessage1('skip ');
             // Clear the pending upload flag
             localStorage.removeItem(pendingUploadKey);
             });
